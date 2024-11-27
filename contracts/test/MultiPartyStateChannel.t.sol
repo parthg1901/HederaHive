@@ -4,35 +4,9 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "../src/MultiPartyStateChannel.sol";
 import "../src/HederaHiveTokens.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import './utils/HederaTokenUtils.sol';
 import './utils/HederaFungibleTokenUtils.sol';
 import './mocks/interfaces/IHRCCommon.sol';
-
-// Simple ERC20 for testing
-contract TestERC20 is ERC20 {
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
-
-    function mint(address to, uint256 amount) public {
-        _mint(to, amount);
-    }
-}
-
-// Simple ERC721 for testing
-contract TestERC721 is ERC721 {
-    uint256 private _tokenIdCounter;
-
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
-
-    function mint(address to) public returns (uint256) {
-        uint256 tokenId = _tokenIdCounter;
-        _safeMint(to, tokenId);
-        _tokenIdCounter++;
-        return tokenId;
-    }
-}
-
 
 contract MultiPartyStateChannelTest is Test, HederaHiveTokens, HederaTokenUtils {
     MultiPartyStateChannel public channel;
