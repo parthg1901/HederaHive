@@ -1,0 +1,38 @@
+name: "CI"
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - "main"
+      - "new-branch"
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v4"
+
+      - name: "Install Foundry"
+        uses: "foundry-rs/foundry-toolchain@v1.2.0"
+
+      - name: "Build the contracts"
+        run: "forge build --root contracts --via-ir"
+
+  test:
+    needs: ["build"]
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v4"
+
+      - name: "Install Foundry"
+        uses: "foundry-rs/foundry-toolchain@v1.2.0"
+
+      - name: "Show the Foundry config"
+        run: "forge config --root contracts"
+
+      - name: "Run the tests"
+        run: "forge test --root contracts --via-ir"
