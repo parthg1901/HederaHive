@@ -44,6 +44,11 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
         int64[][][] nftFinalBalances
     );
 
+    event ParticipantAdded(
+        bytes32 indexed channelId, 
+        address indexed newParticipant
+    );
+
     function openChannel(
         address[] calldata participants,
         address closer,
@@ -191,6 +196,31 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
                 unchecked { ++i; }
             }
         }
+    }
+
+    function addParticipant(
+        bytes32 channelId,
+        address newParticipant
+    ) external nonReentrant {
+        Channel storage channel = channels[channelId];
+        
+        // Check channel is open
+        require(channel.isOpen, "Channel not open");
+        
+        // Ensure new participant is valid
+        require(newParticipant != address(0), "Invalid participant");
+        require(!channel.isParticipant[newParticipant], "Participant already exists");
+        
+        // Ensure only the closer can add participants
+        require(msg.sender == channel.closer, "Not authorized");
+
+        // Add the new participant
+        channel.participants.push(newParticipant);
+        channel.isParticipant[newParticipant] = true;
+        channel.totalParticipants++;
+
+        // Emit an event to log the participant addition
+        emit ParticipantAdded(channelId, newParticipant);
     }
 
     function closeChannel(
