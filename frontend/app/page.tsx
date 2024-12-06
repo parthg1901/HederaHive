@@ -6,6 +6,7 @@ import { useRef, useEffect } from "react";
 import Header from "@/components/Header";
 import { TextPlugin } from "gsap/TextPlugin";
 import { useGSAP } from "@gsap/react";
+import Link from "next/link";
 
 gsap.registerPlugin(TextPlugin);
 
@@ -35,7 +36,7 @@ export default function Home() {
     if (largeSpheresRef.current) animateSpheres(largeSpheresRef.current);
     if (smallSpheresRef.current) animateSpheres(smallSpheresRef.current, 1);
 
-    gsap.to("#button", {
+    gsap.to(".gd-button", {
       backgroundPosition: "200% 0",
       duration: 4,
       ease: "linear",
@@ -93,14 +94,13 @@ export default function Home() {
           Payments that scale.
         </h3>
         <button
-          id="button"
-          className="relative inline-block text-white p-[0.5px] font-medium rounded-xl
+          className="gd-button relative inline-block text-white p-[0.5px] font-medium rounded-xl
           bg-gradient-to-r from-yellow-500 via-purple-300 to-blue-300
           border border-transparent bg-[length:200%_200%] bg-clip-border"
         >
-          <span className="block rounded-xl bg-black px-5 py-2 text-lg font-[family-name:var(--font-geist-mono)]">
+          <Link href={"/home"} className="block rounded-xl bg-black px-5 py-2 text-lg font-[family-name:var(--font-geist-mono)]">
             Get Started
-          </span>
+          </Link>
         </button>
       </main>
     </div>
