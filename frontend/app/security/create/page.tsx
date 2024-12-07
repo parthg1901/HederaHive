@@ -37,7 +37,7 @@ const CreateDigitalSecurity = () => {
         </p>
 
         <div className="grid grid-cols-2 gap-4 w-1/2 justify-center mx-auto">
-          <div className="shadow-md rounded-lg overflow-hidden border border-white">
+          <Link href="/security/create/revenue" className="shadow-md rounded-xl overflow-hidden border border-white">
             <div className="bg-purple-700 px-4 py-3 flex items-center justify-center">
               <FaMoneyBillAlt className="text-4xl text-primary" />
             </div>
@@ -48,9 +48,9 @@ const CreateDigitalSecurity = () => {
                 holders.
               </p>
             </div>
-          </div>
+          </Link>
 
-          <div className="border border-white shadow-md rounded-lg overflow-hidden">
+          <Link href="/security/create/fractionalize" className="border border-white shadow-md rounded-xl overflow-hidden">
             <div className="bg-purple-700 px-4 py-3 flex items-center justify-center">
               <FaChartLine className="text-4xl text-primary" />
             </div>
@@ -61,7 +61,7 @@ const CreateDigitalSecurity = () => {
                 share the rental income.
               </p>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </div>
