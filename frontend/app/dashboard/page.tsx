@@ -14,9 +14,9 @@ export default function Dashboard() {
         <div className="flex justify-between items-center mb-6 mt-14">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <div className="flex gap-4">
-            <button className="px-4 py-2 text-purple-100 border border-purple-700 rounded-xl">
+            <Link href={"/security/add"} className="px-4 py-2 text-purple-100 border border-purple-700 rounded-xl">
               + Import a digital security token
-            </button>
+            </Link>
             <Link href={"/security/create"} className="px-4 py-2 bg-purple-700 text-white rounded-xl hover:bg-purple-600">
               Create new digital security
             </Link>
