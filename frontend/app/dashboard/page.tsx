@@ -1,5 +1,6 @@
 "use client";
 import Header from "@/components/Header";
+import Link from "next/link";
 import { useState } from "react";
 
 export default function Dashboard() {
@@ -9,22 +10,22 @@ export default function Dashboard() {
   return (
     <div className="py-6 px-10 min-h-screen font-[family-name:var(--font-geist-mono)]">
       <Header />
-      <div>
+      <div className="px-8">
         <div className="flex justify-between items-center mb-6 mt-14">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <div className="flex gap-4">
             <button className="px-4 py-2 text-purple-100 border border-purple-700 rounded-xl">
               + Import a digital security token
             </button>
-            <button className="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600">
+            <Link href={"/security/create"} className="px-4 py-2 bg-purple-700 text-white rounded-xl hover:bg-purple-600">
               Create new digital security
-            </button>
+            </Link>
           </div>
         </div>
 
         {/* Admin Section */}
         <div className="mb-8 border border-white rounded-xl">
-          <div className="flex justify-between items-center p-6 bg-purple-500 rounded-xl">
+          <div className="flex justify-between items-center p-6 bg-purple-700 rounded-xl">
             <div
               className="flex items-center cursor-pointer"
               onClick={() => setIsAdminOpen(!isAdminOpen)}
@@ -57,7 +58,7 @@ export default function Dashboard() {
 
         {/* Holder Section */}
         <div className="mb-8 border border-white rounded-xl">
-            <div className="flex justify-between items-center p-6 bg-purple-500 rounded-xl">
+            <div className="flex justify-between items-center p-6 bg-purple-700 rounded-xl">
                 <div
                 className="flex items-center cursor-pointer"
                 onClick={() => setIsHolderOpen(!isHolderOpen)}
