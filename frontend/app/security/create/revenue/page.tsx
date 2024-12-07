@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 
-export default function MultiStepForm() {
+export default function Revenue() {
   const [step, setStep] = useState(1);
 
   const nextStep = () => setStep((prev) => (prev < 5 ? prev + 1 : prev));
