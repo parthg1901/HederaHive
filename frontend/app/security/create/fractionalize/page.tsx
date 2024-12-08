@@ -1,5 +1,6 @@
 "use client";
 import Header from "@/components/Header";
+import { REGULATIONS } from "@/config/constants";
 import Link from "next/link";
 import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
@@ -17,11 +18,9 @@ export default function Fractionalize() {
       case 2:
         return <StepConfiguration />;
       case 3:
-        return <StepCoupon />;
+        return <StepEstate />;
       case 4:
         return <StepRegulation />;
-      case 5:
-        return <StepReview />;
       default:
         return null;
     }
@@ -47,8 +46,11 @@ export default function Fractionalize() {
           Dashboard
         </Link>
         <span className="text-gray-400 mx-2">&gt;</span>
-        <Link href="/security/create" className="hover:text-gray-300 text-gray-200">
-            Create a digital security
+        <Link
+          href="/security/create"
+          className="hover:text-gray-300 text-gray-200"
+        >
+          Create a digital security
         </Link>
 
         <span className="text-gray-400 mx-2">&gt;</span>
@@ -58,9 +60,12 @@ export default function Fractionalize() {
         <div className="w-full max-w-4xl border border-white shadow-md rounded-xl p-6">
           {/* Step Indicator */}
           <div className="flex items-center justify-between mb-8">
-            {["Details", "Configuration", "Coupon", "Regulation", "Review"].map(
+            {["Details", "Configuration", "Coupon", "Regulation"].map(
               (label, index) => (
-                <div key={index} className="flex items-center justify-center w-full">
+                <div
+                  key={index}
+                  className="flex items-center justify-center w-full"
+                >
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
                       step === index + 1
@@ -72,11 +77,11 @@ export default function Fractionalize() {
                   >
                     {index + 1}
                   </div>
-                    <div
-                      className={`h-1 flex-grow ${
-                        step > index + 1 ? "bg-green-500" : "bg-gray-200"
-                      }`}
-                    ></div>
+                  <div
+                    className={`h-1 flex-grow ${
+                      step > index + 1 ? "bg-green-500" : "bg-gray-200"
+                    }`}
+                  ></div>
                 </div>
               )
             )}
@@ -102,7 +107,7 @@ export default function Fractionalize() {
               className="px-4 py-2 bg-purple-700 text-white rounded-xl"
               onClick={nextStep}
             >
-              {step === 5 ? "Submit" : "Next step"}
+              {step === 4 ? "Submit" : "Next step"}
             </button>
           </div>
         </div>
@@ -113,7 +118,7 @@ export default function Fractionalize() {
 
 const StepDetails = () => (
   <div>
-    <h2 className="text-xl font-semibold mb-4">Bond details</h2>
+    <h2 className="text-xl font-semibold mb-4">General Details</h2>
     <form className="space-y-4">
       <div>
         <label className="block text-sm font-medium mb-1">
@@ -142,7 +147,9 @@ const StepDetails = () => (
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Cadastral/Property Identification Number*</label>
+        <label className="block text-sm font-medium mb-1">
+          Cadastral/Property Identification Number*
+        </label>
         <input
           type="text"
           placeholder="12345-6789"
@@ -170,27 +177,223 @@ const StepDetails = () => (
 const StepConfiguration = () => (
   <div>
     <h2 className="text-xl font-semibold mb-4">Configuration</h2>
-    <p>Configuration step content goes here.</p>
+    <form className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium mb-1">Nominal value*</label>
+        <input
+          type="number"
+          placeholder="1000.00"
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">
+          Property Rental Income*
+        </label>
+        <input
+          type="number"
+          placeholder="1000.00"
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">
+          Property Estimated Value*
+        </label>
+        <input
+          type="number"
+          placeholder="100,000.00"
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Currency</label>
+        <input
+          type="string"
+          placeholder="USD"
+          value="USD"
+          disabled
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-not-allowed"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">No. of shares*</label>
+        <input
+          type="number"
+          placeholder="100.00"
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Total Value*</label>
+        <input
+          type="number"
+          placeholder="100,000.00"
+          disabled
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-not-allowed"
+        />
+      </div>
+    </form>
   </div>
 );
 
-const StepCoupon = () => (
+const StepEstate = () => (
   <div>
-    <h2 className="text-xl font-semibold mb-4">Coupon</h2>
-    <p>Coupon step content goes here.</p>
+    <h2 className="text-xl font-semibold mb-4">Property Details</h2>
+    <form className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium mb-1">Estate Name*</label>
+        <input
+          type="text"
+          placeholder="Estate Name"
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">
+          Estate Address*
+        </label>
+        <input
+          type="text"
+          placeholder="Estate Address"
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">City*</label>
+        <input
+          type="text"
+          placeholder="City"
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Zip Code*</label>
+        <input
+          type="number"
+          placeholder="Zip Code"
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">Estate Type*</label>
+        <select className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
+          <option value="Residential" className="bg-black">
+            Residential
+          </option>
+          <option value="Commercial" className="bg-black">
+            Commercial
+          </option>
+          <option value="Industrial" className="bg-black">
+            Industrial
+          </option>
+          <option value="Agricultural" className="bg-black">
+            Agricultural
+          </option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">
+          Estate Description*
+        </label>
+        <textarea
+          placeholder="Estate Description"
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </div>
+    </form>
   </div>
 );
 
-const StepRegulation = () => (
-  <div>
-    <h2 className="text-xl font-semibold mb-4">Regulation</h2>
-    <p>Regulation step content goes here.</p>
-  </div>
-);
+const StepRegulation = () => {
+  const [selectedReg, setSelectedReg] = useState<
+    keyof typeof REGULATIONS | null
+  >(null);
+  const [selectedSubType, setSelectedSubType] = useState<
+    keyof (typeof REGULATIONS)[keyof typeof REGULATIONS]["rules"] | ""
+  >("");
 
-const StepReview = () => (
-  <div>
-    <h2 className="text-xl font-semibold mb-4">Review</h2>
-    <p>Review step content goes here.</p>
-  </div>
-);
+  const handleRegulationChange = (e: any) => {
+    setSelectedReg(e.target.value);
+    setSelectedSubType("");
+  };
+
+  const handleSubTypeChange = (e: any) => {
+    setSelectedSubType(e.target.value);
+  };
+  return (
+    <div>
+      <h2 className="text-xl font-semibold mb-4">Regulation</h2>
+      <form className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Jurisdiction</label>
+          <input
+            type="text"
+            placeholder="Jusicdiction"
+            value="United States Jurisdiction"
+            disabled
+            className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-not-allowed"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Regulation Type*
+          </label>
+          <select
+            className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            onChange={handleRegulationChange}
+            defaultValue=""
+          >
+            <option value="" disabled selected className="bg-black">
+              Select Regulation
+            </option>
+            {Object.entries(REGULATIONS).map(([reg, details]) => (
+              <option key={reg} value={reg} className="bg-black">
+                {details.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {selectedReg && (
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Regulation Sub Type*
+            </label>
+            <select
+              className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              onChange={handleSubTypeChange}
+              defaultValue=""
+            >
+              <option value="" selected className="bg-black">
+                Select Regulation Sub Type
+              </option>
+              {REGULATIONS[selectedReg].subtypes.map((subType) => (
+                <option key={subType} value={subType} className="bg-black">
+                  {subType}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {selectedReg && selectedSubType && (
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Rules</h3>
+            <ul className="list-disc pl-4">
+              {(
+                REGULATIONS[selectedReg].rules[selectedSubType] as {
+                  restriction: string;
+                  rule: string;
+                }[]
+              ).map(({ restriction, rule }) => (
+                <li key={restriction}>
+                  <span className="font-semibold">{restriction}:</span> {rule}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </form>
+    </div>
+  );
+};
