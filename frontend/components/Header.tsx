@@ -1,9 +1,8 @@
 "use client";
-import Image from "next/image";
-import { WalletSelectionDialog } from "./WalletSelectDialog";
 import { useWalletInterface } from "@/services/wallets/useWalletInterface";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { openWalletConnectModal } from "@/services/wallets/walletconnect/walletConnectClient";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
@@ -13,7 +12,7 @@ export default function Header() {
     if (accountId && walletInterface) {
       walletInterface.disconnect();
     } else {
-      setOpen(true);
+      openWalletConnectModal()
     }
   };
 
@@ -38,7 +37,6 @@ export default function Header() {
             {accountId ? `Connected: ${accountId}` : 'Connect Wallet'}
           </span>
         </button>
-      <WalletSelectionDialog open={open} setOpen={setOpen} onClose={() => setOpen(false)} />
     </header>
   );
 }
