@@ -2,7 +2,7 @@
 import { WalletConnectContext } from "../../../context/WalletConnectProvider";
 import { useCallback, useContext, useEffect } from 'react';
 import { WalletInterface } from "../walletInterface";
-import { AccountId, ContractExecuteTransaction, ContractId, LedgerId, TokenAssociateTransaction, TokenId, Transaction, TransactionId, TransferTransaction, Client } from "@hashgraph/sdk";
+import { AccountId, ContractExecuteTransaction, ContractId, LedgerId, TokenAssociateTransaction, TokenId, Transaction, TransactionId, TransferTransaction, Client, TokenCreateTransaction, TokenType, TokenSupplyType, PrivateKey } from "@hashgraph/sdk";
 import { ContractFunctionParameterBuilder } from "../contractFunctionParameterBuilder";
 import { appConfig } from "../../../config";
 import { SignClientTypes } from "@walletconnect/types";
@@ -63,6 +63,40 @@ class WalletConnectWallet implements WalletInterface {
   private getAccountId() {
     // Need to convert from walletconnect's AccountId to hashgraph/sdk's AccountId because walletconnect's AccountId and hashgraph/sdk's AccountId are not the same!
     return AccountId.fromString(this.getSigner().getAccountId().toString());
+  }
+
+  async createNFT(name: string, symbol: string, supply: number) {
+    const supplyKEY = PrivateKey.fromStringDer(process.env.NEXT_PUBLIC_SUPPLY_KEY!);
+    let nftCreateTx = await new TokenCreateTransaction()
+    .setTokenName(name)
+    .setTokenSymbol(symbol)
+    .setTokenType(TokenType.NonFungibleUnique)
+    .setDecimals(0)
+    .setInitialSupply(0)
+    .setSupplyType(TokenSupplyType.Finite)
+    .setMaxSupply(supply)
+    .setTreasuryAccountId(this.getAccountId())
+    .setSupplyKey(supplyKEY)
+    .freezeWithSigner(this.getSigner());
+    console.log(nftCreateTx)
+    try {
+      const nftCreateTxSigned = await nftCreateTx.signWithSigner(this.getSigner());
+      console.log(nftCreateTxSigned)
+      const nftCreateTxResponse = await nftCreateTxSigned.executeWithSigner(this.getSigner());
+  
+      // Get receipt for create token transaction
+      const nftCreateTxReceipt = await nftCreateTxResponse.getReceiptWithSigner(this.getSigner());
+      console.log(
+        `Status of NFT create transaction: ${nftCreateTxReceipt.status.toString()}`
+      );
+  
+      // Get token id
+      const tokenId = nftCreateTxReceipt.tokenId;
+      console.log(`Token id: ${tokenId!.toString()}`);
+
+    } catch (error) {
+      console.log("error")
+    }
   }
 
   async transferHBAR(toAddress: AccountId, amount: number) {
