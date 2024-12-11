@@ -1,26 +1,255 @@
 "use client";
+import { useState, useCallback } from "react";
 import Header from "@/components/Header";
 import { REGULATIONS } from "@/config/constants";
+import { useWalletInterface } from "@/services/wallets/useWalletInterface";
 import Link from "next/link";
-import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
+import { PinataSDK } from "pinata-web3";
+import { useRouter } from "next/navigation";
+
+interface RevenueState {
+  details: {
+    name: string;
+    symbol: string;
+    decimals: number;
+    cadastralNumber: string;
+    controllable: boolean;
+    blocklistEnabled: boolean;
+    approvalListEnabled: boolean;
+  };
+  configuration: {
+    nominalValue: number;
+    rentalIncome: number;
+    currency: string;
+    numberOfShares: number;
+    totalValue: number;
+  };
+  estate: {
+    name: string;
+    address: string;
+    city: string;
+    zipCode: string;
+    type: "Residential" | "Commercial" | "Industrial" | "Agricultural";
+    description: string;
+  };
+  regulation: {
+    jurisdiction: string;
+    regulationType: string;
+    regulationSubType: string;
+    rules: Array<{
+      restriction: string;
+      rule: string;
+    }>;
+  };
+}
 
 export default function Revenue() {
   const [step, setStep] = useState(1);
+  const { walletInterface } = useWalletInterface();
+  const router = useRouter();
 
-  const nextStep = () => setStep((prev) => (prev < 5 ? prev + 1 : prev));
+  const [formState, setFormState] = useState<RevenueState>({
+    details: {
+      name: "",
+      symbol: "",
+      decimals: 6,
+      cadastralNumber: "",
+      controllable: false,
+      blocklistEnabled: false,
+      approvalListEnabled: false,
+    },
+    configuration: {
+      nominalValue: 0,
+      rentalIncome: 0,
+      currency: "USD",
+      numberOfShares: 0,
+      totalValue: 0,
+    },
+    estate: {
+      name: "",
+      address: "",
+      city: "",
+      zipCode: "",
+      type: "Residential",
+      description: "",
+    },
+    regulation: {
+      jurisdiction: "United States Jurisdiction",
+      regulationType: "",
+      regulationSubType: "",
+      rules: [],
+    },
+  });
+
+  const updateFormState = useCallback(
+    <K extends keyof RevenueState>(
+      section: K,
+      updates: Partial<RevenueState[K]>
+    ) => {
+      setFormState((prev) => ({
+        ...prev,
+        [section]: { ...prev[section], ...updates },
+      }));
+    },
+    []
+  );
+
+  const validateStep = (currentStep: number): boolean => {
+    switch (currentStep) {
+      case 1:
+        return !!(
+          formState.details.name &&
+          formState.details.symbol &&
+          formState.details.cadastralNumber &&
+          formState.details.decimals > 0
+        );
+      case 2:
+        return !!(
+          formState.configuration.nominalValue > 0 &&
+          formState.configuration.numberOfShares > 0
+        );
+      case 3:
+        return !!(
+          formState.estate.name &&
+          formState.estate.address &&
+          formState.estate.city &&
+          formState.estate.zipCode
+        );
+      case 4:
+        return !!(
+          formState.regulation.regulationType &&
+          formState.regulation.regulationSubType
+        );
+      default:
+        return false;
+    }
+  };
+
+  const nextStep = () => {
+    if (validateStep(step)) {
+      setStep((prev) => (prev < 4 ? prev + 1 : prev));
+    } else {
+      console.error("Please fill out all required fields");
+    }
+  };
+
   const prevStep = () => setStep((prev) => (prev > 1 ? prev - 1 : prev));
+
+  const handleSubmit = async () => {
+    try {
+      if (!validateStep(4)) {
+        console.error("Please complete all steps");
+        return;
+      }
+
+      const pinata = new PinataSDK({
+        pinataJwt: process.env.NEXT_PUBLIC_PINATA_JWT!,
+        pinataGateway: process.env.NEXT_PUBLIC_PINATA_GATEWAY!,
+      });
+      const metadata: any = {
+        name: formState.details.name,
+        description: formState.estate.description,
+        image: "ipfs://bafkreigpicqb23nzryvr2kcj7vvh7xwln5nxnpxu6mmhjhapej77zl2tma",
+
+        type: "image/jpeg",
+        format: "HIP412@2.0.0",
+        properties: {
+          cadastral: formState.details.cadastralNumber,
+          estate: {
+            address: formState.estate.address,
+            city: formState.estate.city,
+            zipCode: formState.estate.zipCode,
+            type: formState.estate.type,
+          },
+          regulation: {
+            type: formState.regulation.regulationType,
+            subtype: formState.regulation.regulationSubType,
+          },
+        },
+        attributes: [],
+      };
+    
+      if (formState.configuration.nominalValue) {
+        metadata.attributes.push({
+          trait_type: "Nominal Value",
+          value: formState.configuration.nominalValue,
+        });
+      }
+      if (formState.configuration.rentalIncome) {
+        metadata.attributes.push({
+          trait_type: "Rental Income",
+          value: formState.configuration.rentalIncome,
+        });
+      }
+      if (formState.configuration.currency) {
+        metadata.attributes.push({
+          trait_type: "Currency",
+          value: formState.configuration.currency,
+        });
+      }
+      if (formState.configuration.numberOfShares) {
+        metadata.attributes.push({
+          trait_type: "Number of Shares",
+          value: formState.configuration.numberOfShares,
+        });
+      }
+      if (formState.configuration.totalValue) {
+        metadata.attributes.push({
+          trait_type: "Total Value",
+          value: formState.configuration.totalValue,
+        });
+      }
+      const uploadResponse = await pinata.upload.json(metadata, {
+        metadata: {
+          name: `${formState.details.name} - Revenue Metadata`,
+        }
+      });
+
+      const tokenId = await walletInterface?.createNFT(formState.details.name, formState.details.symbol, formState.configuration.numberOfShares)
+      console.log("Revenue metadata successfully uploaded!");
+      await walletInterface?.mintNFTs(tokenId!, [Buffer.from("ipfs://"+uploadResponse.IpfsHash)]);
+      console.log("NFT Created Successfully");
+    } catch (error) {
+      console.error("Submission error:", error);
+      console.error("Failed to submit Revenue details");
+    }
+  };
 
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <StepDetails />;
+        return (
+          <StepDetails
+            details={formState.details}
+            updateDetails={(updates) => updateFormState("details", updates)}
+          />
+        );
       case 2:
-        return <StepConfiguration />;
+        return (
+          <StepConfiguration
+            configuration={formState.configuration}
+            updateConfiguration={(updates) =>
+              updateFormState("configuration", updates)
+            }
+          />
+        );
       case 3:
-        return <StepEstate />;
+        return (
+          <StepEstate
+            estate={formState.estate}
+            updateEstate={(updates) => updateFormState("estate", updates)}
+          />
+        );
       case 4:
-        return <StepRegulation />;
+        return (
+          <StepRegulation
+            regulation={formState.regulation}
+            updateRegulation={(updates) =>
+              updateFormState("regulation", updates)
+            }
+          />
+        );
       default:
         return null;
     }
@@ -90,24 +319,24 @@ export default function Revenue() {
           {/* Step Content */}
           {renderStep()}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8">
+           {/* Navigation Buttons */}
+           <div className="flex justify-between mt-6">
             <button
-              className={`px-4 py-2 rounded-xl ${
-                step === 1
-                  ? "bg-gray-200 text-gray-600 cursor-not-allowed"
-                  : "bg-purple-700 text-white"
-              }`}
               onClick={prevStep}
               disabled={step === 1}
+              className={`px-4 py-2 rounded-md ${
+                step === 1
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-purple-600 text-white hover:bg-purple-700"
+              }`}
             >
               Previous
             </button>
             <button
-              className="px-4 py-2 bg-purple-700 text-white rounded-xl"
-              onClick={nextStep}
+              onClick={step === 4 ? handleSubmit : nextStep}
+              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
             >
-              {step === 4 ? "Submit" : "Next step"}
+              {step === 4 ? "Submit" : "Next"}
             </button>
           </div>
         </div>
@@ -116,126 +345,203 @@ export default function Revenue() {
   );
 }
 
-const StepDetails = () => (
+const StepDetails = ({
+  details,
+  updateDetails,
+}: {
+  details: RevenueState["details"];
+  updateDetails: (updates: Partial<RevenueState["details"]>) => void;
+}) => (
   <div>
     <h2 className="text-xl font-semibold mb-4">General Details</h2>
-    <form className="space-y-4">
+    <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1">
-          Name* <span className="text-red-500">(Field is mandatory)</span>
+        <label className="block text-sm font-medium mb-2">
+          Name*
         </label>
         <input
           type="text"
-          placeholder="Enter name"
-          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          value={details.name}
+          onChange={(e) => updateDetails({ name: e.target.value })}
+          placeholder="Property Security Name"
+          className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-purple-500"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Symbol*</label>
+        <label className="block text-sm font-medium mb-2">Symbol*</label>
         <input
           type="text"
-          placeholder="Enter Symbol"
-          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          value={details.symbol}
+          onChange={(e) => updateDetails({ symbol: e.target.value })}
+          placeholder="PROP"
+          className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-purple-500"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Decimals*</label>
+        <label className="block text-sm font-medium mb-2">Decimals*</label>
         <input
           type="number"
+          value={details.decimals}
+          onChange={(e) =>
+            updateDetails({ decimals: parseInt(e.target.value) })
+          }
           placeholder="6"
-          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-purple-500"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">
-          Cadastral/Property Identification Number*
+        <label className="block text-sm font-medium mb-2">
+          Cadastral/Property ID*
         </label>
         <input
           type="text"
-          placeholder="12345-6789"
-          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          value={details.cadastralNumber}
+          onChange={(e) => updateDetails({ cadastralNumber: e.target.value })}
+          placeholder="Property Identification Number"
+          className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-purple-500"
         />
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex space-x-4">
         <label className="flex items-center space-x-2">
-          <input type="checkbox" className="h-4 w-4" />
+          <input
+            type="checkbox"
+            checked={details.controllable}
+            onChange={(e) => updateDetails({ controllable: e.target.checked })}
+            className="rounded"
+          />
           <span>Controllable</span>
         </label>
         <label className="flex items-center space-x-2">
-          <input type="checkbox" className="h-4 w-4" />
+          <input
+            type="checkbox"
+            checked={details.blocklistEnabled}
+            onChange={(e) =>
+              updateDetails({ blocklistEnabled: e.target.checked })
+            }
+            className="rounded"
+          />
           <span>Blocklist</span>
         </label>
         <label className="flex items-center space-x-2">
-          <input type="checkbox" className="h-4 w-4" />
-          <span>Approval list</span>
+          <input
+            type="checkbox"
+            checked={details.approvalListEnabled}
+            onChange={(e) =>
+              updateDetails({ approvalListEnabled: e.target.checked })
+            }
+            className="rounded"
+          />
+          <span>Approval List</span>
         </label>
       </div>
-    </form>
+    </div>
   </div>
 );
 
-const StepConfiguration = () => (
-  <div>
-    <h2 className="text-xl font-semibold mb-4">Configuration</h2>
-    <form className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium mb-1">Nominal value*</label>
-        <input
-          type="number"
-          placeholder="1000.00"
-          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">
-          Property Rental Income*
-        </label>
-        <input
-          type="number"
-          placeholder="1000.00"
-          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">Currency</label>
-        <input
-          type="string"
-          placeholder="USD"
-          value="USD"
-          disabled
-          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-not-allowed"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">No. of shares*</label>
-        <input
-          type="number"
-          placeholder="100.00"
-          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">Total Value*</label>
-        <input
-          type="number"
-          placeholder="100,000.00"
-          disabled
-          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-not-allowed"
-        />
-      </div>
-    </form>
-  </div>
-);
+const StepConfiguration = ({
+  configuration,
+  updateConfiguration,
+}: {
+  configuration: RevenueState["configuration"];
+  updateConfiguration: (
+    updates: Partial<RevenueState["configuration"]>
+  ) => void;
+}) => {
+  const calculateTotalValue = (shares: number, nominalValue: number) => {
+    return shares * nominalValue;
+  };
 
-const StepEstate = () => (
+  return (
+    <div>
+      <h2 className="text-xl font-semibold mb-4">Configuration</h2>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Nominal Value*
+          </label>
+          <input
+            type="number"
+            value={configuration.nominalValue}
+            onChange={(e) => {
+              const nominalValue = parseFloat(e.target.value);
+              updateConfiguration({
+                nominalValue,
+                totalValue: calculateTotalValue(
+                  configuration.numberOfShares,
+                  nominalValue
+                ),
+              });
+            }}
+            placeholder="1000.00"
+            className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Number of Shares*
+          </label>
+          <input
+            type="number"
+            value={configuration.numberOfShares}
+            onChange={(e) => {
+              const shares = parseFloat(e.target.value);
+              updateConfiguration({
+                numberOfShares: shares,
+                totalValue: calculateTotalValue(
+                  shares,
+                  configuration.nominalValue
+                ),
+              });
+            }}
+            placeholder="100"
+            className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Rental Income
+          </label>
+          <input
+            type="number"
+            value={configuration.rentalIncome}
+            onChange={(e) =>
+              updateConfiguration({ rentalIncome: parseFloat(e.target.value) })
+            }
+            placeholder="1000.00"
+            className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">Total Value</label>
+          <input
+            type="number"
+            value={configuration.totalValue}
+            disabled
+            className="w-full p-2 border rounded-md bg-transparent cursor-not-allowed"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StepEstate = ({
+  estate,
+  updateEstate,
+}: {
+  estate: RevenueState["estate"];
+  updateEstate: (updates: Partial<RevenueState["estate"]>) => void;
+}) => (
   <div>
     <h2 className="text-xl font-semibold mb-4">Property Details</h2>
-    <form className="space-y-4">
+    <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium mb-1">Estate Name*</label>
         <input
           type="text"
           placeholder="Estate Name"
+          value={estate.name}
+          onChange={(e) => updateEstate({ name: e.target.value })}
           className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
       </div>
@@ -245,6 +551,8 @@ const StepEstate = () => (
         </label>
         <input
           type="text"
+          value={estate.address}
+          onChange={(e) => updateEstate({ address: e.target.value })}
           placeholder="Estate Address"
           className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
@@ -253,6 +561,8 @@ const StepEstate = () => (
         <label className="block text-sm font-medium mb-1">City*</label>
         <input
           type="text"
+          value={estate.city}
+          onChange={(e) => updateEstate({ city: e.target.value })}
           placeholder="City"
           className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
@@ -261,23 +571,44 @@ const StepEstate = () => (
         <label className="block text-sm font-medium mb-1">Zip Code*</label>
         <input
           type="number"
+          value={estate.zipCode}
+          onChange={(e) => updateEstate({ zipCode: e.target.value })}
           placeholder="Zip Code"
           className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Estate Type*</label>
-        <select className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
-          <option value="Residential" className="bg-black">
+        <select
+          className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          onChange={(e) => updateEstate({ type: e.target.value as any })}
+        >
+          <option
+            selected={estate.type === "Residential"}
+            value="Residential"
+            className="bg-black"
+          >
             Residential
           </option>
-          <option value="Commercial" className="bg-black">
+          <option
+            selected={estate.type === "Commercial"}
+            value="Commercial"
+            className="bg-black"
+          >
             Commercial
           </option>
-          <option value="Industrial" className="bg-black">
+          <option
+            selected={estate.type === "Industrial"}
+            value="Industrial"
+            className="bg-black"
+          >
             Industrial
           </option>
-          <option value="Agricultural" className="bg-black">
+          <option
+            selected={estate.type === "Agricultural"}
+            value="Agricultural"
+            className="bg-black"
+          >
             Agricultural
           </option>
         </select>
@@ -287,15 +618,25 @@ const StepEstate = () => (
           Estate Description*
         </label>
         <textarea
+          value={estate.description}
+          onChange={(e) => updateEstate({ description: e.target.value })}
           placeholder="Estate Description"
           className="w-full border rounded-md bg-transparent p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
       </div>
-    </form>
+    </div>
   </div>
 );
 
-const StepRegulation = () => {
+const StepRegulation = ({
+  regulation,
+  updateRegulation,
+}: {
+  regulation: RevenueState["regulation"];
+  updateRegulation: (
+    updates: Partial<RevenueState["regulation"]>
+  ) => void;
+}) => {
   const [selectedReg, setSelectedReg] = useState<
     keyof typeof REGULATIONS | null
   >(null);
@@ -305,11 +646,22 @@ const StepRegulation = () => {
 
   const handleRegulationChange = (e: any) => {
     setSelectedReg(e.target.value);
+    updateRegulation({ regulationType: e.target.value });
     setSelectedSubType("");
+    updateRegulation({ regulationSubType: "" });
   };
 
   const handleSubTypeChange = (e: any) => {
     setSelectedSubType(e.target.value);
+    updateRegulation({ regulationSubType: e.target.value });
+    if (selectedReg && selectedSubType) {
+      updateRegulation({
+        rules: REGULATIONS[selectedReg].rules[selectedSubType] as {
+          restriction: string;
+          rule: string;
+        }[],
+      });
+    }
   };
   return (
     <div>
