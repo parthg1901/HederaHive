@@ -4,6 +4,7 @@ import express from 'express';
 import { errorHandler } from './middleware';
 import * as dotenv from 'dotenv';
 import path from 'path';
+import { estate } from './routers';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -23,3 +24,7 @@ app.use((req, res, next) => {
 app.get('/ping', (_req: Request, res: Response) => {
   res.status(200).send('pong');
 });
+
+app.use('/api/v1/estate', estate);
+
+app.use(errorHandler);
