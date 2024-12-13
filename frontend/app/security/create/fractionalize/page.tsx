@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa";
 import { PinataSDK } from "pinata-web3";
 import { useRouter } from "next/navigation";
+import { Status } from "@hashgraph/sdk";
 
 interface FractionalizationState {
   details: {
@@ -47,7 +48,7 @@ interface FractionalizationState {
 
 export default function Fractionalize() {
   const [step, setStep] = useState(1);
-  const { walletInterface } = useWalletInterface();
+  const { walletInterface, accountId } = useWalletInterface();
   const router = useRouter();
 
   const [formState, setFormState] = useState<FractionalizationState>({
@@ -216,8 +217,29 @@ export default function Fractionalize() {
 
       const tokenId = await walletInterface?.createNFT(formState.details.name, formState.details.symbol, formState.configuration.numberOfShares)
       console.log("Fractionalization metadata successfully uploaded!");
-      await walletInterface?.mintNFTs(tokenId!, [Buffer.from("ipfs://"+uploadResponse.IpfsHash)]);
-      console.log("NFT Created Successfully");
+      const receipt = await walletInterface?.mintNFTs(tokenId!, [Buffer.from("ipfs://"+uploadResponse.IpfsHash)]);
+      if (receipt?.status === Status.Success && accountId) {
+        console.log("NFT Created Successfully");
+
+        const res = await fetch(process.env.NEXT_PUBLIC_SERVER! + "/api/v1/estate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: formState.details.name,
+            description: formState.estate.description,
+            rental: formState.configuration.rentalIncome,
+            location: formState.estate.zipCode,
+            estimatedValue: formState.configuration.estimatedValue,
+            owner: accountId,
+            token: tokenId!.toString(),
+          })
+        })
+        if (res.status === 201) {
+          router.replace("/dashboard");
+        }
+      }
     } catch (error) {
       console.error("Submission error:", error);
       console.error("Failed to submit fractionalization details");

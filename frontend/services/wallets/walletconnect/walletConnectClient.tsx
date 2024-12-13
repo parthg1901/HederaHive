@@ -115,10 +115,10 @@ class WalletConnectWallet implements WalletInterface {
 		let mintTxSign = await mintTx.sign(supplyKEY);
 		let mintTxSubmit = await mintTxSign.executeWithSigner(this.getSigner());
 		let mintRx = await mintTxSubmit.getReceiptWithSigner(this.getSigner());
-
     const oB = await this.bCheckerFcn(this.getAccountId(), tokenId);
     console.log(`\n- Treasury balance: ${oB[0]} NFTs of ID: ${tokenId.toString()} and ${oB[1]}`);
 		console.log([mintRx, mintTxSubmit.transactionId]);
+    return mintRx;
   }
 
   async transferHBAR(toAddress: AccountId, amount: number) {

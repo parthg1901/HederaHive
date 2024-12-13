@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa";
 import { PinataSDK } from "pinata-web3";
 import { useRouter } from "next/navigation";
+import { Status } from "@hashgraph/sdk";
 
 interface RevenueState {
   details: {
@@ -46,7 +47,7 @@ interface RevenueState {
 
 export default function Revenue() {
   const [step, setStep] = useState(1);
-  const { walletInterface } = useWalletInterface();
+  const { walletInterface, accountId } = useWalletInterface();
   const router = useRouter();
 
   const [formState, setFormState] = useState<RevenueState>({
@@ -150,7 +151,8 @@ export default function Revenue() {
       const metadata: any = {
         name: formState.details.name,
         description: formState.estate.description,
-        image: "ipfs://bafkreigpicqb23nzryvr2kcj7vvh7xwln5nxnpxu6mmhjhapej77zl2tma",
+        image:
+          "ipfs://bafkreigpicqb23nzryvr2kcj7vvh7xwln5nxnpxu6mmhjhapej77zl2tma",
 
         type: "image/jpeg",
         format: "HIP412@2.0.0",
@@ -169,7 +171,7 @@ export default function Revenue() {
         },
         attributes: [],
       };
-    
+
       if (formState.configuration.nominalValue) {
         metadata.attributes.push({
           trait_type: "Nominal Value",
@@ -203,16 +205,45 @@ export default function Revenue() {
       const uploadResponse = await pinata.upload.json(metadata, {
         metadata: {
           name: `${formState.details.name} - Revenue Metadata`,
-        }
+        },
       });
 
-      const tokenId = await walletInterface?.createNFT(formState.details.name, formState.details.symbol, formState.configuration.numberOfShares)
+      const tokenId = await walletInterface?.createNFT(
+        formState.details.name,
+        formState.details.symbol,
+        formState.configuration.numberOfShares
+      );
       console.log("Revenue metadata successfully uploaded!");
-      await walletInterface?.mintNFTs(tokenId!, [Buffer.from("ipfs://"+uploadResponse.IpfsHash)]);
-      console.log("NFT Created Successfully");
+      const receipt = await walletInterface?.mintNFTs(tokenId!, [
+        Buffer.from("ipfs://" + uploadResponse.IpfsHash),
+      ]);
+      if (receipt?.status === Status.Success && accountId) {
+        console.log("NFT Created Successfully");
+
+        const res = await fetch(
+          process.env.NEXT_PUBLIC_SERVER! + "/api/v1/estate",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: formState.details.name,
+              description: formState.estate.description,
+              rental: formState.configuration.rentalIncome,
+              location: formState.estate.zipCode,
+              owner: accountId,
+              token: tokenId!.toString(),
+            }),
+          }
+        );
+        if (res.status === 201) {
+          router.replace("/dashboard");
+        }
+      }
     } catch (error) {
       console.error("Submission error:", error);
-      console.error("Failed to submit Revenue details");
+      console.error("Failed to submit fractionalization details");
     }
   };
 
@@ -319,8 +350,8 @@ export default function Revenue() {
           {/* Step Content */}
           {renderStep()}
 
-           {/* Navigation Buttons */}
-           <div className="flex justify-between mt-6">
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-6">
             <button
               onClick={prevStep}
               disabled={step === 1}
@@ -356,9 +387,7 @@ const StepDetails = ({
     <h2 className="text-xl font-semibold mb-4">General Details</h2>
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-2">
-          Name*
-        </label>
+        <label className="block text-sm font-medium mb-2">Name*</label>
         <input
           type="text"
           value={details.name}
@@ -633,9 +662,7 @@ const StepRegulation = ({
   updateRegulation,
 }: {
   regulation: RevenueState["regulation"];
-  updateRegulation: (
-    updates: Partial<RevenueState["regulation"]>
-  ) => void;
+  updateRegulation: (updates: Partial<RevenueState["regulation"]>) => void;
 }) => {
   const [selectedReg, setSelectedReg] = useState<
     keyof typeof REGULATIONS | null
