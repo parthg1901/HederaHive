@@ -8,9 +8,13 @@ interface IEstate {
   description: string;
   rental: number;
   location: string;
-  estimatedValue: number;
+  estimatedValue: number | undefined;
   owner: string;
   token: string;
+  holders: {
+    address: string;
+    share: number;
+  }[];
 }
 
 const estateSchema = new Schema<IEstate>({
@@ -32,8 +36,7 @@ const estateSchema = new Schema<IEstate>({
     required: true
   },
   estimatedValue: {
-    type: Number,
-    required: true
+    type: Number
   },
   owner: {
     type: String,
@@ -43,6 +46,15 @@ const estateSchema = new Schema<IEstate>({
     type: String,
     unique: true,
     required: true
+  },
+  holders: {
+    type: [
+      {
+        address: String,
+        share: Number
+      }
+    ],
+    default: []
   }
 });
 

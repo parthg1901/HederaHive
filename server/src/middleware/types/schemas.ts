@@ -6,7 +6,7 @@ export const createEstate = yup.object({
     description: yup.string().required(),
     rental: yup.number().required(),
     location: yup.string().required(),
-    estimatedValue: yup.number().required(),
+    estimatedValue: yup.number(),
     owner: yup.string().required(),
     token: yup.string().required()
   })
@@ -15,5 +15,19 @@ export const createEstate = yup.object({
 export const getEstateByOwner = yup.object({
   params: yup.object({
     owner: yup.string().required()
+  })
+});
+
+export const updateHolders = yup.object({
+  body: yup.object({
+    address: yup.string().required(),
+    share: yup.number().required(),
+    estateId: yup.string().required()
+  })
+});
+
+export const getHoldings = yup.object({
+  params: yup.object({
+    address: yup.string().required()
   })
 });
