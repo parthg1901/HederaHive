@@ -29,14 +29,16 @@ const createEstate = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { name, description, rental, location, estimatedValue } = req.body;
+  const { name, description, rental, location, estimatedValue, owner, token } = req.body;
   try {
     const estate = await Estate.create({
       name,
       description,
       rental,
       location,
-      estimatedValue
+      estimatedValue,
+      token,
+      owner
     });
     res.status(201).json(estate);
   } catch (error) {
