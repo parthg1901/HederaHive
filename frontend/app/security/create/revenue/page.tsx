@@ -658,7 +658,6 @@ const StepEstate = ({
 );
 
 const StepRegulation = ({
-  regulation,
   updateRegulation,
 }: {
   regulation: RevenueState["regulation"];

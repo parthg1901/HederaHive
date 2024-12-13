@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import gsap from "gsap";
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import Header from "@/components/Header";
 import { TextPlugin } from "gsap/TextPlugin";
 import { useGSAP } from "@gsap/react";

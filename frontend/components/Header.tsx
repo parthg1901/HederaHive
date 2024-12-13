@@ -5,7 +5,7 @@ import Link from "next/link";
 import { openWalletConnectModal } from "@/services/wallets/walletconnect/walletConnectClient";
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
+  const [, setOpen] = useState(false);
   const { accountId, walletInterface } = useWalletInterface();
 
   const handleConnect = async () => {

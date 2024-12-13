@@ -675,7 +675,6 @@ const StepEstate = ({
 );
 
 const StepRegulation = ({
-  regulation,
   updateRegulation,
 }: {
   regulation: FractionalizationState["regulation"];

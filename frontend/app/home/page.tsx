@@ -23,7 +23,7 @@ const Home = () => {
                         center: approximateCoordinates(position.coords.latitude, position.coords.longitude),
                         zoom: 13,
                     })
-                    const marker = new mapboxgl.Marker({ color: 'black' })
+                    new mapboxgl.Marker({ color: 'black' })
                         .setLngLat(approximateCoordinates(position.coords.latitude, position.coords.longitude))
                         .addTo(map.current);
                 });  
