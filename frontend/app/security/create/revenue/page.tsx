@@ -13,7 +13,6 @@ interface RevenueState {
   details: {
     name: string;
     symbol: string;
-    decimals: number;
     cadastralNumber: string;
     controllable: boolean;
     blocklistEnabled: boolean;
@@ -54,7 +53,6 @@ export default function Revenue() {
     details: {
       name: "",
       symbol: "",
-      decimals: 6,
       cadastralNumber: "",
       controllable: false,
       blocklistEnabled: false,
@@ -102,8 +100,7 @@ export default function Revenue() {
         return !!(
           formState.details.name &&
           formState.details.symbol &&
-          formState.details.cadastralNumber &&
-          formState.details.decimals > 0
+          formState.details.cadastralNumber
         );
       case 2:
         return !!(
@@ -403,18 +400,6 @@ const StepDetails = ({
           value={details.symbol}
           onChange={(e) => updateDetails({ symbol: e.target.value })}
           placeholder="PROP"
-          className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-purple-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-2">Decimals*</label>
-        <input
-          type="number"
-          value={details.decimals}
-          onChange={(e) =>
-            updateDetails({ decimals: parseInt(e.target.value) })
-          }
-          placeholder="6"
           className="w-full p-2 border rounded-md bg-transparent focus:ring-2 focus:ring-purple-500"
         />
       </div>
