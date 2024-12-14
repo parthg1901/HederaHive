@@ -11,6 +11,7 @@ import * as ReactDOM from "react-dom/client";
 import React from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
+import { IoChevronBackCircleOutline } from "react-icons/io5";
 
 interface IEstate {
   name: string;
@@ -18,6 +19,7 @@ interface IEstate {
   rental: number;
   estimatedValue: number | undefined;
   token: string;
+  owner: string;
   zip: string;
 }
 
@@ -36,8 +38,9 @@ const CustomHouseMarker = ({ onClick }: { onClick: () => void }) => {
 };
 
 const Home = () => {
-  const [, setShowHouseDetails] = useState(false);
+  const [showHouseDetails, setShowHouseDetails] = useState(false);
   const [estates, setEstates] = useState<IEstate[]>([]);
+  const [selectedEstate, setSelectedEstate] = useState<IEstate | null>(null);
 
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -55,6 +58,7 @@ const Home = () => {
             estimatedValue: estate.estimatedValue,
             token: estate.token,
             zip: estate.location,
+            owner: estate.owner
           }))
         )
       );
@@ -80,17 +84,6 @@ const Home = () => {
           zoom: 13,
         });
 
-        const markerElement = document.createElement("div");
-
-        const root = ReactDOM.createRoot(markerElement);
-        root.render(
-          <React.StrictMode>
-            <CustomHouseMarker
-              onClick={() => setShowHouseDetails((prevState) => !prevState)}
-            />
-          </React.StrictMode>
-        );
-
         estates.map((estate) => {
           geocodingService
             .forwardGeocode({
@@ -110,7 +103,20 @@ const Home = () => {
               }
 
               const feature = response.body.features[0];
+              const markerElement = document.createElement("div");
 
+              const root = ReactDOM.createRoot(markerElement);
+              root.render(
+                <React.StrictMode>
+                  <CustomHouseMarker
+                    onClick={() => {
+                      setSelectedEstate(estate);
+
+                      setShowHouseDetails((prevState) => !prevState);
+                    }}
+                  />
+                </React.StrictMode>
+              );
               markerRef.current = new mapboxgl.Marker(markerElement)
                 .setLngLat(
                   approximateCoordinates(feature.center[1], feature.center[0])
@@ -143,9 +149,69 @@ const Home = () => {
   }, [estates]);
 
   return (
-    <div>
+    <div className="flex flex-row font-[family-name:var(--font-geist-mono)]">
+      {/* Map Section */}
       <div className="pt-[10px] w-[70vw] h-screen" ref={mapContainer}>
         <Header />
+      </div>
+
+      {/* Sidebar Section */}
+      <div className="w-[30vw] h-screen border-l border-gray-700 text-gray-200 p-6 shadow-2xl">
+        {/* Sidebar Header */}
+        <div className="mb-6 border-b border-gray-700 pb-4">
+          <h1 className="text-2xl font-semibold text-gray-100 tracking-wide">
+            Estate Details
+          </h1>
+        </div>
+
+        {showHouseDetails && selectedEstate ? (
+          <div>
+            {/* Back Button */}
+            <button
+              className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition mb-6"
+              onClick={() => setShowHouseDetails(false)}
+            >
+              <IoChevronBackCircleOutline size={25}/>
+              Back
+            </button>
+
+            {/* Estate Details */}
+            <div className="bg-[#2c2c2c] p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-bold text-gray-100 mb-2">
+                {selectedEstate.name}
+              </h2>
+              <p className="text-gray-400 mb-4">{selectedEstate.description}</p>
+              <div className="space-y-2 text-sm">
+                <p className="flex items-center justify-between w-full">
+                  <span className="font-semibold text-gray-300">Rental Income</span>
+                  <span className="ml-1">${selectedEstate.rental}</span>
+                </p>
+                <p className="flex items-center justify-between w-full">
+                  <span className="font-semibold text-gray-300">
+                    Estimated Value
+                  </span>
+                  <span className="ml-1">${selectedEstate.estimatedValue}</span>
+                </p>
+                <p className="flex items-center justify-between w-full">
+                  <span className="font-semibold text-gray-300">NFT Collection Address</span>
+                  <span className="ml-1">{selectedEstate.token}</span>
+                </p>
+                <p className="flex items-center justify-between w-full">
+                  <span className="font-semibold text-gray-300">Owner</span>
+                  <span className="ml-1">{selectedEstate.owner}</span>
+                </p>
+                <p className="flex items-center justify-between w-full">
+                  <span className="font-semibold text-gray-300">Area Postal Code</span>
+                  <span className="ml-1">{selectedEstate.zip}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Select a property marker to view details.
+          </div>
+        )}
       </div>
     </div>
   );
