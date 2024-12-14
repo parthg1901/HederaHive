@@ -36,7 +36,7 @@ const CustomHouseMarker = ({ onClick }: { onClick: () => void }) => {
 };
 
 const Home = () => {
-  const [showHouseDetails, setShowHouseDetails] = useState(false);
+  const [, setShowHouseDetails] = useState(false);
   const [estates, setEstates] = useState<IEstate[]>([]);
 
   const mapContainer = useRef<HTMLDivElement | null>(null);
