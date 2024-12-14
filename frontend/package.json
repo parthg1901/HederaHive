@@ -12,6 +12,7 @@
     "@gsap/react": "^2.1.1",
     "@hashgraph/hedera-wallet-connect": "^1.4.2",
     "@hashgraph/sdk": "^2.54.2",
+    "@mapbox/mapbox-sdk": "^0.16.1",
     "@walletconnect/modal": "^2.7.0",
     "ethers": "^5.7.2",
     "gsap": "^3.12.5",
