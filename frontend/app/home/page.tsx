@@ -13,8 +13,11 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import { IoChevronBackCircleOutline } from "react-icons/io5";
 import { useWalletInterface } from "@/services/wallets/useWalletInterface";
+import { AccountId, ContractId } from "@hashgraph/sdk";
+import { Interface } from "@ethersproject/abi";
 
 interface IEstate {
+  id: string;
   name: string;
   description: string;
   rental: number;
@@ -42,7 +45,7 @@ const Home = () => {
   const [showHouseDetails, setShowHouseDetails] = useState(false);
   const [estates, setEstates] = useState<IEstate[]>([]);
   const [selectedEstate, setSelectedEstate] = useState<IEstate | null>(null);
-  const { accountId } = useWalletInterface();
+  const { accountId, walletInterface } = useWalletInterface();
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker[]>([]);
@@ -53,6 +56,7 @@ const Home = () => {
       .then((data) =>
         setEstates(
           data.map((estate: any) => ({
+            id: estate._id,
             name: estate.name,
             description: estate.description,
             rental: estate.rental,
@@ -133,19 +137,25 @@ const Home = () => {
                   />
                 </React.StrictMode>
               );
-              markerRef.current.push(new mapboxgl.Marker(markerElement)
-                .setLngLat(
-                  approximateCoordinates(feature.center[1], feature.center[0])
-                )
-                .addTo(map.current!));
+              markerRef.current.push(
+                new mapboxgl.Marker(markerElement)
+                  .setLngLat(
+                    approximateCoordinates(feature.center[1], feature.center[0])
+                  )
+                  .addTo(map.current!)
+              );
               map.current!.on("zoom", () => {
                 const currentZoom = map.current?.getZoom() || 0;
 
                 if (markerRef.current) {
                   if (currentZoom > 12) {
-                    markerRef.current.forEach(marker => marker.getElement().style.display = "block");
+                    markerRef.current.forEach(
+                      (marker) => (marker.getElement().style.display = "block")
+                    );
                   } else {
-                    markerRef.current.forEach(marker => marker.getElement().style.display = "none");
+                    markerRef.current.forEach(
+                      (marker) => (marker.getElement().style.display = "none")
+                    );
                   }
                 }
               });
@@ -163,6 +173,69 @@ const Home = () => {
       }
     };
   }, [estates]);
+
+  const createHive = async () => {
+    if (walletInterface) {
+      const closer = AccountId.fromString(
+        process.env.NEXT_PUBLIC_SUPPLY_KEY_ID!
+      ).toSolidityAddress();
+
+      const params = {
+        participants: [
+          AccountId.fromString(accountId).toSolidityAddress(),
+          closer,
+        ],
+        closer: closer,
+        tokens: [],
+        tokenAmounts: [],
+        nftTokens: [],
+        serialNumbers: [],
+      };
+
+      const abi = [
+        "function openChannel(address[] participants, address closer, address[] tokens, uint256[] tokenAmounts, address[] nftTokens, int64[][] serialNumbers) external payable",
+      ];
+
+      const iface = new Interface(abi);
+
+      const data = iface
+        .encodeFunctionData("openChannel", [
+          params.participants,
+          params.closer,
+          params.tokens,
+          params.tokenAmounts,
+          params.nftTokens,
+          params.serialNumbers,
+        ])
+        .slice(2);
+      const tx = await walletInterface.executeContractFunction(
+        ContractId.fromString("0.0.5268920"),
+        Buffer.from(data, "hex"),
+        500000,
+        0
+      );
+      const logs = await walletInterface.getEventsFromRecord(tx);
+
+      await fetch(process.env.NEXT_PUBLIC_SERVER! + "/api/v1/channel/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          channelId: logs[0].args[0].toString(),
+          participants: params.participants,
+          closer: params.closer,
+          tokens: params.tokens,
+          tokenAmounts: params.tokenAmounts,
+          nftTokens: params.nftTokens,
+          serialNumbers: params.serialNumbers,
+          hbarDeposit: 0,
+          creator: AccountId.fromString(accountId).toSolidityAddress(),
+          estateId: selectedEstate?.id,
+        }),
+      })
+    }
+  };
 
   return (
     <div className="flex flex-row font-[family-name:var(--font-geist-mono)]">
@@ -234,12 +307,20 @@ const Home = () => {
               </div>
             </div>
             {accountId === selectedEstate.owner ? (
-              <button className="bg-purple-600 w-full rounded-xl p-2">Create Hive</button>
+              <button
+                className="bg-purple-600 w-full rounded-xl p-2"
+                onClick={createHive}
+              >
+                Create Hive
+              </button>
             ) : (
-              <button className="bg-purple-600 w-full rounded-xl p-2">Request to Join Hive</button>
+              <button className="bg-purple-600 w-full rounded-xl p-2">
+                Request to Join Hive
+              </button>
             )}
-              <button className="border border-purple-600 w-full rounded-xl p-2">Pay Rent</button>
-
+            <button className="border border-purple-600 w-full rounded-xl p-2">
+              Pay Rent
+            </button>
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">

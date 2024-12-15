@@ -1,9 +1,10 @@
-import { AccountId, ContractId, NftId, TokenId, TokenNftInfo, TransactionId, TransactionReceipt } from "@hashgraph/sdk";
-import { ContractFunctionParameterBuilder } from "./contractFunctionParameterBuilder";
+import { LogDescription } from "@ethersproject/abi";
+import { AccountId, ContractId, NftId, TokenId, TokenNftInfo, TransactionId, TransactionReceipt, TransactionRecord } from "@hashgraph/sdk";
 
 export interface WalletInterface {
-  executeContractFunction: (contractId: ContractId, functionName: string, functionParameters: ContractFunctionParameterBuilder, gasLimit: number) => Promise<TransactionId | string | null>;
+  executeContractFunction: (contractId: ContractId, functionParameters: Buffer, gasLimit: number, value: number) => Promise<TransactionRecord>;
   disconnect: () => void;
+  getEventsFromRecord: (record: TransactionRecord) => Promise<LogDescription[]>
   createNFT: (name: string, symbol: string, supply: number) => Promise<TokenId | null>;
   mintNFTs: (tokenId: TokenId, CIDs: Buffer[]) => Promise<TransactionReceipt>;
   getNFTInfo: (NFTId: NftId) => Promise<TokenNftInfo[]>;

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ethersproject/abi": "^5.7.0",
     "@gsap/react": "^2.1.1",
     "@hashgraph/hedera-wallet-connect": "^1.4.2",
     "@hashgraph/sdk": "^2.54.2",
