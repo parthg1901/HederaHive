@@ -2,7 +2,7 @@
 import { WalletConnectContext } from "../../../context/WalletConnectProvider";
 import { useCallback, useContext, useEffect } from 'react';
 import { WalletInterface } from "../walletInterface";
-import { AccountId, ContractExecuteTransaction, ContractId, LedgerId, TokenAssociateTransaction, TokenId, Transaction, TransactionId, TransferTransaction, Client, TokenCreateTransaction, TokenType, TokenSupplyType, PrivateKey, TokenMintTransaction, AccountBalanceQuery } from "@hashgraph/sdk";
+import { AccountId, ContractExecuteTransaction, ContractId, LedgerId, TokenAssociateTransaction, TokenId, Transaction, TransactionId, TransferTransaction, Client, TokenCreateTransaction, TokenType, TokenSupplyType, PrivateKey, TokenMintTransaction, AccountBalanceQuery, NftId, TokenNftInfoQuery } from "@hashgraph/sdk";
 import { ContractFunctionParameterBuilder } from "../contractFunctionParameterBuilder";
 import { appConfig } from "../../../config";
 import { SignClientTypes } from "@walletconnect/types";
@@ -108,6 +108,23 @@ class WalletConnectWallet implements WalletInterface {
     }
   }
 
+  async getNFTInfo(NFTId: NftId) {
+    const supplyKEY = PrivateKey.fromStringDer(process.env.NEXT_PUBLIC_SUPPLY_KEY!);
+    
+    const client = Client.forTestnet().setOperator(process.env.NEXT_PUBLIC_SUPPLY_KEY_ID!, supplyKEY);
+    try {
+      const nftInfos = await new TokenNftInfoQuery()
+       .setNftId(NFTId)
+       .execute(client);
+      return nftInfos;
+
+    } catch (error) {
+      console.log(error)
+      return [];
+    }
+
+  }
+
   async mintNFTs(tokenId: TokenId, CIDs: Buffer[]) {
     const supplyKEY = PrivateKey.fromStringDer(process.env.NEXT_PUBLIC_SUPPLY_KEY!);
 
@@ -115,9 +132,6 @@ class WalletConnectWallet implements WalletInterface {
 		let mintTxSign = await mintTx.sign(supplyKEY);
 		let mintTxSubmit = await mintTxSign.executeWithSigner(this.getSigner());
 		let mintRx = await mintTxSubmit.getReceiptWithSigner(this.getSigner());
-    const oB = await this.bCheckerFcn(this.getAccountId(), tokenId);
-    console.log(`\n- Treasury balance: ${oB[0]} NFTs of ID: ${tokenId.toString()} and ${oB[1]}`);
-		console.log([mintRx, mintTxSubmit.transactionId]);
     return mintRx;
   }
 

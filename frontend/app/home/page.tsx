@@ -12,6 +12,7 @@ import React from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import { IoChevronBackCircleOutline } from "react-icons/io5";
+import { useWalletInterface } from "@/services/wallets/useWalletInterface";
 
 interface IEstate {
   name: string;
@@ -41,10 +42,10 @@ const Home = () => {
   const [showHouseDetails, setShowHouseDetails] = useState(false);
   const [estates, setEstates] = useState<IEstate[]>([]);
   const [selectedEstate, setSelectedEstate] = useState<IEstate | null>(null);
-
+  const { accountId } = useWalletInterface();
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const markerRef = useRef<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
     fetch(process.env.NEXT_PUBLIC_SERVER! + "/api/v1/estate/")
@@ -132,19 +133,19 @@ const Home = () => {
                   />
                 </React.StrictMode>
               );
-              markerRef.current = new mapboxgl.Marker(markerElement)
+              markerRef.current.push(new mapboxgl.Marker(markerElement)
                 .setLngLat(
                   approximateCoordinates(feature.center[1], feature.center[0])
                 )
-                .addTo(map.current!);
+                .addTo(map.current!));
               map.current!.on("zoom", () => {
                 const currentZoom = map.current?.getZoom() || 0;
 
                 if (markerRef.current) {
                   if (currentZoom > 12) {
-                    markerRef.current.getElement().style.display = "block";
+                    markerRef.current.forEach(marker => marker.getElement().style.display = "block");
                   } else {
-                    markerRef.current.getElement().style.display = "none";
+                    markerRef.current.forEach(marker => marker.getElement().style.display = "none");
                   }
                 }
               });
@@ -180,7 +181,7 @@ const Home = () => {
         </div>
 
         {showHouseDetails && selectedEstate ? (
-          <div>
+          <div className="flex flex-col space-y-6">
             {/* Back Button */}
             <button
               className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition mb-6"
@@ -206,32 +207,39 @@ const Home = () => {
                   <span className="font-semibold text-gray-300">
                     Rental Income
                   </span>
-                  <span className="ml-1">${selectedEstate.rental}</span>
+                  <span>${selectedEstate.rental}</span>
                 </p>
                 <p className="flex items-center justify-between w-full">
                   <span className="font-semibold text-gray-300">
                     Estimated Value
                   </span>
-                  <span className="ml-1">${selectedEstate.estimatedValue}</span>
+                  <span>${selectedEstate.estimatedValue}</span>
                 </p>
                 <p className="flex items-center justify-between w-full">
                   <span className="font-semibold text-gray-300">
                     NFT Collection Address
                   </span>
-                  <span className="ml-1">{selectedEstate.token}</span>
+                  <span>{selectedEstate.token}</span>
                 </p>
                 <p className="flex items-center justify-between w-full">
                   <span className="font-semibold text-gray-300">Owner</span>
-                  <span className="ml-1">{selectedEstate.owner}</span>
+                  <span>{selectedEstate.owner}</span>
                 </p>
                 <p className="flex items-center justify-between w-full">
                   <span className="font-semibold text-gray-300">
                     Area Postal Code
                   </span>
-                  <span className="ml-1">{selectedEstate.zip}</span>
+                  <span>{selectedEstate.zip}</span>
                 </p>
               </div>
             </div>
+            {accountId === selectedEstate.owner ? (
+              <button className="bg-purple-600 w-full rounded-xl p-2">Create Hive</button>
+            ) : (
+              <button className="bg-purple-600 w-full rounded-xl p-2">Request to Join Hive</button>
+            )}
+              <button className="border border-purple-600 w-full rounded-xl p-2">Pay Rent</button>
+
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
