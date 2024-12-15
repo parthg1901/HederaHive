@@ -58,7 +58,7 @@ const Home = () => {
             estimatedValue: estate.estimatedValue,
             token: estate.token,
             zip: estate.location,
-            owner: estate.owner
+            owner: estate.owner,
           }))
         )
       );
@@ -111,6 +111,21 @@ const Home = () => {
                   <CustomHouseMarker
                     onClick={() => {
                       setSelectedEstate(estate);
+                      if (showHouseDetails) {
+                        map.current?.dragPan.enable();
+                        map.current?.touchZoomRotate.enable();
+                        map.current?.scrollZoom.enable();
+                      } else {
+                        map.current?.setCenter(
+                          approximateCoordinates(
+                            feature.center[1],
+                            feature.center[0]
+                          )
+                        );
+                        map.current?.dragPan.disable();
+                        map.current?.touchZoomRotate.disable();
+                        map.current?.scrollZoom.disable();
+                      }
 
                       setShowHouseDetails((prevState) => !prevState);
                     }}
@@ -169,9 +184,14 @@ const Home = () => {
             {/* Back Button */}
             <button
               className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition mb-6"
-              onClick={() => setShowHouseDetails(false)}
+              onClick={() => {
+                setShowHouseDetails(false);
+                map.current?.dragPan.enable();
+                map.current?.touchZoomRotate.enable();
+                map.current?.scrollZoom.enable();
+              }}
             >
-              <IoChevronBackCircleOutline size={25}/>
+              <IoChevronBackCircleOutline size={25} />
               Back
             </button>
 
@@ -183,7 +203,9 @@ const Home = () => {
               <p className="text-gray-400 mb-4">{selectedEstate.description}</p>
               <div className="space-y-2 text-sm">
                 <p className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-gray-300">Rental Income</span>
+                  <span className="font-semibold text-gray-300">
+                    Rental Income
+                  </span>
                   <span className="ml-1">${selectedEstate.rental}</span>
                 </p>
                 <p className="flex items-center justify-between w-full">
@@ -193,7 +215,9 @@ const Home = () => {
                   <span className="ml-1">${selectedEstate.estimatedValue}</span>
                 </p>
                 <p className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-gray-300">NFT Collection Address</span>
+                  <span className="font-semibold text-gray-300">
+                    NFT Collection Address
+                  </span>
                   <span className="ml-1">{selectedEstate.token}</span>
                 </p>
                 <p className="flex items-center justify-between w-full">
@@ -201,7 +225,9 @@ const Home = () => {
                   <span className="ml-1">{selectedEstate.owner}</span>
                 </p>
                 <p className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-gray-300">Area Postal Code</span>
+                  <span className="font-semibold text-gray-300">
+                    Area Postal Code
+                  </span>
                   <span className="ml-1">{selectedEstate.zip}</span>
                 </p>
               </div>
