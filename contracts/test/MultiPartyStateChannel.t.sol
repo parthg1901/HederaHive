@@ -255,6 +255,8 @@ contract MultiPartyStateChannelTest is Test, HederaHiveTokens, HederaTokenUtils 
             nftIds
         );
 
+        vm.warp(block.timestamp + 31 days);
+
         // Prepare closing state
         uint256[] memory hbarBalances = new uint256[](2);
         hbarBalances[0] = 0.7 ether;

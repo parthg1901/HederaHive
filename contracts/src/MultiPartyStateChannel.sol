@@ -73,6 +73,7 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
 
         channel.closer = closer;
         channel.totalParticipants = participants.length;
+        channel.lastFinalized = block.timestamp;
 
         // Register participants
         for (uint i = 0; i < participants.length;) {
