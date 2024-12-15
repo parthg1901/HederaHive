@@ -18,7 +18,7 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
         mapping(address => mapping(address => uint256)) tokenDeposits;
         mapping(address => mapping(address => int64[])) nftDeposits;
         uint256 totalParticipants;
-        bool isOpen;
+        uint256 lastFinalized;
     }
 
     mapping(bytes32 => Channel) public channels;
@@ -34,14 +34,15 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
         int64[][][] serialNumbers
     );
 
-    event ChannelClosed(
+    event ChannelFinalized(
         bytes32 indexed channelId,
         address[] participants,
         uint256[] hbarBalances,
         address[] tokens,
         uint256[][] tokenBalances,
         address[] nftTokens,
-        int64[][][] nftFinalBalances
+        int64[][][] nftFinalBalances,
+        uint256 timestamp
     );
 
     event ParticipantAdded(
@@ -69,11 +70,9 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
         );
 
         Channel storage channel = channels[channelId];
-        require(!channel.isOpen, "Channel exists");
 
         channel.closer = closer;
         channel.totalParticipants = participants.length;
-        channel.isOpen = true;
 
         // Register participants
         for (uint i = 0; i < participants.length;) {
@@ -153,7 +152,6 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
         int64[][] calldata serialNumbers
     ) external payable nonReentrant {
         Channel storage channel = channels[channelId];
-        require(channel.isOpen, "Channel not open");
         require(channel.isParticipant[msg.sender], "Not a participant");
 
         channel.hbarDeposits[msg.sender] += msg.value;
@@ -204,9 +202,6 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
     ) external nonReentrant {
         Channel storage channel = channels[channelId];
         
-        // Check channel is open
-        require(channel.isOpen, "Channel not open");
-        
         // Ensure new participant is valid
         require(newParticipant != address(0), "Invalid participant");
         require(!channel.isParticipant[newParticipant], "Participant already exists");
@@ -223,37 +218,18 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
         emit ParticipantAdded(channelId, newParticipant);
     }
 
-    function closeChannel(
+    function finalizeChannel(
         bytes32 channelId,
         address[] calldata participants,
         uint256[] calldata hbarBalances,
         address[] calldata tokens,
         uint256[][] calldata tokenBalances,
         address[] calldata nftTokens,
-        int64[][][] calldata nftFinalBalances,
-        uint256 nonce,
-        bytes calldata closerSignature
+        int64[][][] calldata nftFinalBalances
     ) external nonReentrant {
         Channel storage channel = channels[channelId];
-        require(channel.isOpen, "Channel not open");
         require(msg.sender == channel.closer, "Not closer");
-
-        bytes32 messageHash = keccak256(
-            abi.encode(
-                channelId,
-                nonce,
-                participants,
-                hbarBalances,
-                tokens,
-                tokenBalances,
-                nftTokens,
-                nftFinalBalances
-            )
-        );
-
-        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-        address signer = ethSignedMessageHash.recover(closerSignature);
-        require(signer == channel.closer, "Invalid signature");
+        require(block.timestamp - channel.lastFinalized >= 30 days, "Channel not finalized");
 
         // Transfer HBAR
         for (uint i = 0; i < participants.length;) {
@@ -263,7 +239,6 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
             unchecked { ++i; }
         }
 
-        // Transfer fungible tokens
         // Transfer fungible tokens
         for (uint i = 0; i < tokens.length;) {
             for (uint j = 0; j < participants.length;) {
@@ -307,15 +282,16 @@ contract MultiPartyStateChannel is ReentrancyGuard, HederaTokenService {
             unchecked { ++i; }
         }
 
-        channel.isOpen = false;
-        emit ChannelClosed(
+        channel.lastFinalized = block.timestamp;
+        emit ChannelFinalized(
             channelId,
             participants,
             hbarBalances,
             tokens,
             tokenBalances,
             nftTokens,
-            nftFinalBalances
+            nftFinalBalances,
+            block.timestamp
         );
     }
 }

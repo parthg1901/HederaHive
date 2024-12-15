@@ -271,37 +271,16 @@ contract MultiPartyStateChannelTest is Test, HederaHiveTokens, HederaTokenUtils 
         nftFinalBalances[0][1] = new int64[](1);  // Bob gets NFT ID 0
         nftFinalBalances[0][1][0] = 1;
 
-        // Sign the closing state
-        uint256 nonce = 1;
-        bytes32 messageHash = keccak256(
-            abi.encode(
-                channelId,
-                nonce,
-                participants,
-                hbarBalances,
-                erc20Tokens,
-                erc20Balances,
-                nftContracts,
-                nftFinalBalances
-            )
-        );
-
-        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(closerPrivateKey, ethSignedMessageHash);
-        bytes memory signature = abi.encodePacked(r, s, v);
-
         // Close the channel
         vm.prank(closer);
-        channel.closeChannel(
+        channel.finalizeChannel(
             channelId,
             participants,
             hbarBalances,
             erc20Tokens,
             erc20Balances,
             nftContracts,
-            nftFinalBalances,
-            nonce,
-            signature
+            nftFinalBalances
         );
 
         // Verify final balances
@@ -407,16 +386,14 @@ contract MultiPartyStateChannelTest is Test, HederaHiveTokens, HederaTokenUtils 
         int64[][][] memory nftFinalBalances = new int64[][][](0);
         
         vm.prank(alice);
-        channel.closeChannel(
+        channel.finalizeChannel(
             channelId,
             participants,
             hbarBalances,
             erc20Tokens,
             erc20Balances,
             nftContracts,
-            nftFinalBalances,
-            0,
-            bytes("")
+            nftFinalBalances
         );
     }
 }
