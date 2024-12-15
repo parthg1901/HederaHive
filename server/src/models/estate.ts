@@ -15,6 +15,7 @@ interface IEstate {
     address: string;
     share: number;
   }[];
+  channel: string;
 }
 
 const estateSchema = new Schema<IEstate>({
@@ -55,6 +56,10 @@ const estateSchema = new Schema<IEstate>({
       }
     ],
     default: []
+  },
+  channel: {
+    type: String,
+    required: false
   }
 });
 

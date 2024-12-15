@@ -4,7 +4,7 @@ import express from 'express';
 import { errorHandler } from './middleware';
 import * as dotenv from 'dotenv';
 import path from 'path';
-import { estate } from './routers';
+import { channel, estate } from './routers';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -26,5 +26,6 @@ app.get('/ping', (_req: Request, res: Response) => {
 });
 
 app.use('/api/v1/estate', estate);
+app.use('/api/v1/channel', channel);
 
 app.use(errorHandler);

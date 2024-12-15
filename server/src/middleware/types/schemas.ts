@@ -31,3 +31,53 @@ export const getHoldings = yup.object({
     address: yup.string().required()
   })
 });
+
+export const createChannel = yup.object({
+  body: yup.object({
+    channelId: yup.string().required(),
+    participants: yup.array().of(yup.string()).required(),
+    closer: yup.string().required(),
+    tokens: yup.array().of(yup.string()).optional(),
+    tokenAmounts: yup.array().of(yup.number()).optional(),
+    nftTokens: yup.array().of(yup.string()).optional(),
+    serialNumbers: yup.array().of(yup.number()).optional(),
+    hbarDeposit: yup.number().required(),
+    creator: yup.string().required(),
+    estateId: yup.string().optional()
+  })
+});
+
+export const updateChannelState = yup.object({
+  body: yup.object({
+    channelId: yup.string().required(),
+    participants: yup.array().of(yup.string()).required(),
+    hbarBalances: yup.array().of(yup.number()).required(),
+    tokens: yup.array().of(yup.string()).required(),
+    tokenBalances: yup.array().of(
+      yup.array().of(yup.number()).required()
+    ).required(),
+    nftTokens: yup.array().of(yup.string()).required(),
+    nftFinalBalances: yup.array().of(
+      yup.array().of(yup.number()).required()
+    ).required()
+  })
+});
+
+export const addParticipant = yup.object({
+  body: yup.object({
+    channelId: yup.string().required(),
+    participant: yup.string().required()
+  })
+});
+
+export const getChannel = yup.object({
+  body: yup.object({
+    channelId: yup.string().required()
+  })
+});
+
+export const finalizeChannel = yup.object({
+  body: yup.object({
+    channelId: yup.string().required()
+  })
+});
