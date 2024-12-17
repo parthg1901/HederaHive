@@ -15,6 +15,7 @@ import { IoChevronBackCircleOutline } from "react-icons/io5";
 import { useWalletInterface } from "@/services/wallets/useWalletInterface";
 import { AccountId, ContractId } from "@hashgraph/sdk";
 import { Interface } from "@ethersproject/abi";
+import Link from "next/link";
 
 interface IEstate {
   id: string;
@@ -25,6 +26,14 @@ interface IEstate {
   token: string;
   owner: string;
   zip: string;
+  channel: string;
+}
+
+interface IHive {
+  name: string;
+  channelId: string;
+  totalParticipants: number;
+  participantHBARBalance: number;
 }
 
 const CustomHouseMarker = ({ onClick }: { onClick: () => void }) => {
@@ -49,6 +58,7 @@ const Home = () => {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker[]>([]);
+  const [hives, setHives] = useState<IHive[]>([]);
 
   useEffect(() => {
     fetch(process.env.NEXT_PUBLIC_SERVER! + "/api/v1/estate/")
@@ -64,10 +74,36 @@ const Home = () => {
             token: estate.token,
             zip: estate.location,
             owner: estate.owner,
+            channel: estate.channel,
           }))
         )
       );
   }, []);
+
+  useEffect(() => {
+    if (accountId) {
+      console.log("hehee")
+      fetch(
+        process.env.NEXT_PUBLIC_SERVER! +
+          "/api/v1/channel/getChannelByParticipant/" +
+          AccountId.fromString(accountId).toSolidityAddress()
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data)
+          setHives(
+            data.channels.map((hive: any) => ({
+              name: hive.name,
+              channelId: hive.channelId,
+              totalParticipants: hive.totalParticipants,
+              participantHBARBalance: hive.participantHBARBalance,
+            }))
+          )
+
+        }
+        );
+    }
+  }, [walletInterface]);
   useEffect(() => {
     if (typeof window !== "undefined" && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(function (position) {
@@ -222,6 +258,7 @@ const Home = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          name: selectedEstate?.name + "'s Hive",
           channelId: logs[0].args[0].toString(),
           participants: params.participants,
           closer: params.closer,
@@ -233,7 +270,17 @@ const Home = () => {
           creator: AccountId.fromString(accountId).toSolidityAddress(),
           estateId: selectedEstate?.id,
         }),
-      })
+      });
+
+      setHives((prevState) => [
+        ...prevState,
+        {
+          name: selectedEstate?.name + "'s Hive",
+          channelId: logs[0].args[0].toString(),
+          totalParticipants: 2,
+          participantHBARBalance: 0,
+        },
+      ]);
     }
   };
 
@@ -247,10 +294,16 @@ const Home = () => {
       {/* Sidebar Section */}
       <div className="w-[30vw] h-screen border-l border-gray-700 text-gray-200 p-6 shadow-2xl">
         {/* Sidebar Header */}
-        <div className="mb-6 border-b border-gray-700 pb-4">
+        <div className="mb-6 border-b border-gray-700 pb-4 flex flex-row justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-100 tracking-wide">
-            Estate Details
+            {showHouseDetails ? "Estate Details" : "Your Hives"}
           </h1>
+          <Link
+            href={"/dashboard"}
+            className="bg-purple-600 rounded-xl px-3 py-2"
+          >
+            Your Securities
+          </Link>
         </div>
 
         {showHouseDetails && selectedEstate ? (
@@ -322,9 +375,33 @@ const Home = () => {
               Pay Rent
             </button>
           </div>
+        ) : hives.length === 0 ? (
+          <div className="flex items-center justify-center text-gray-500">
+            Create a hive to get started.
+          </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            Select a property marker to view details.
+          <div className="flex flex-col space-y-6">
+            {hives.map((hive) => (
+              <div
+                key={hive.channelId}
+                className="bg-[#2c2c2c] p-6 rounded-lg shadow"
+              >
+                <h2 className="text-2xl font-bold text-gray-100 mb-2">
+                  {hive.name}
+                </h2>
+                <p className="text-gray-400 mb-4">
+                  {hive.totalParticipants} Participants
+                </p>
+                <div className="space-y-2 text-sm">
+                  <p className="flex items-center justify-between w-full">
+                    <span className="font-semibold text-gray-300">
+                      Balance
+                    </span>
+                    <span>{hive.participantHBARBalance} ℏ</span>
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
