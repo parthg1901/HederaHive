@@ -203,6 +203,22 @@ const getChannel = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const getChannelByParticipant = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { participant } = req.params;
+
+  try {
+    const channels = await Channel.find({ participants: participant });
+
+    res.status(200).json({ channels });
+  } catch (error) {
+    next(error);
+  }
+}
+
 const finalizeChannel = async (
   req: Request,
   res: Response,
@@ -249,5 +265,6 @@ export default {
   updateChannelState,
   addParticipant,
   getChannel,
+  getChannelByParticipant,
   finalizeChannel
 };

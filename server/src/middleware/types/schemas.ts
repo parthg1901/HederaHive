@@ -76,6 +76,12 @@ export const getChannel = yup.object({
   })
 });
 
+export const getChannelByParticipant = yup.object({
+  params: yup.object({
+    participant: yup.string().required()
+  })
+});
+
 export const finalizeChannel = yup.object({
   body: yup.object({
     channelId: yup.string().required()
