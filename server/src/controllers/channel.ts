@@ -8,6 +8,7 @@ const createChannel = async (
   next: NextFunction
 ) => {
   const {
+    name,
     channelId,
     participants,
     closer,
@@ -51,6 +52,7 @@ const createChannel = async (
     const hbarDeposits: Record<string, number> = { [creator]: hbarDeposit };
 
     const newChannel = await Channel.create({
+      name,
       channelId,
       participants,
       closer,
@@ -213,11 +215,22 @@ const getChannelByParticipant = async (
   try {
     const channels = await Channel.find({ participants: participant });
 
-    res.status(200).json({ channels });
+    const enrichedChannels = channels.map((channel) => {
+      const participantHBARBalance =
+        channel.hbarDeposits?.[participant] || 0;
+
+      return {
+        ...channel.toObject(),
+        participantHBARBalance,
+      };
+    });
+
+    res.status(200).json({ channels: enrichedChannels });
   } catch (error) {
     next(error);
   }
-}
+};
+
 
 const finalizeChannel = async (
   req: Request,

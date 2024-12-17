@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 interface IChannel {
+  name: string;
   participants: string[];
   closer: string;
   hbarDeposits: { [key: string]: number };
@@ -10,9 +11,18 @@ interface IChannel {
   nftDeposits: { [tokenAddress: string]: { [participantAddress: string]: number[] } };
   totalParticipants: number;
   lastFinalized: number;
+  channelId: string;
 }
 
 const channelSchema = new Schema<IChannel>({
+  name: {
+    type: String,
+    required: true
+  },
+  channelId: {
+    type: String,
+    required: true,
+  },
   participants: {
     type: [String],
     required: true,

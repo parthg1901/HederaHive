@@ -34,6 +34,7 @@ export const getHoldings = yup.object({
 
 export const createChannel = yup.object({
   body: yup.object({
+    name: yup.string().required(),
     channelId: yup.string().required(),
     participants: yup.array().of(yup.string()).required(),
     closer: yup.string().required(),
