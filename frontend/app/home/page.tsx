@@ -82,7 +82,6 @@ const Home = () => {
 
   useEffect(() => {
     if (accountId) {
-      console.log("hehee")
       fetch(
         process.env.NEXT_PUBLIC_SERVER! +
           "/api/v1/channel/getChannelByParticipant/" +
