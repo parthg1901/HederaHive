@@ -12,6 +12,7 @@ interface IChannel {
   totalParticipants: number;
   lastFinalized: number;
   channelId: string;
+  topicId: string;
 }
 
 const channelSchema = new Schema<IChannel>({
@@ -20,6 +21,10 @@ const channelSchema = new Schema<IChannel>({
     required: true
   },
   channelId: {
+    type: String,
+    required: true,
+  },
+  topicId: {
     type: String,
     required: true,
   },

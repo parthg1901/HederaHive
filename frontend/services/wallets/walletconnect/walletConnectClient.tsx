@@ -20,6 +20,8 @@ import {
   NftId,
   TokenNftInfoQuery,
   TransactionRecord,
+  TopicCreateTransaction,
+  TopicMessageQuery,
 } from "@hashgraph/sdk";
 import { appConfig } from "../../../config";
 import { SignClientTypes } from "@walletconnect/types";
@@ -190,6 +192,50 @@ class WalletConnectWallet implements WalletInterface {
     return txResult ? txResult.transactionId : null;
   }
 
+  async createHCSTopic() {
+    const supplyKEY = PrivateKey.fromStringDer(
+      process.env.NEXT_PUBLIC_SUPPLY_KEY!
+    );
+
+    const client = Client.forTestnet().setOperator(
+      process.env.NEXT_PUBLIC_SUPPLY_KEY_ID!,
+      supplyKEY
+    );
+    // Create a new topic
+    const createTopicTransaction =
+      await new TopicCreateTransaction().execute(client);
+    let receipt = await createTopicTransaction.getReceipt(
+      client
+    );
+    let topicId = receipt.topicId;
+    if (topicId) {
+      return topicId.toString();
+    } else {
+      throw new Error("Failed to create topic");
+    }
+  }
+
+  async subscribeHCSTopic(topicId: string, onReceive: (message: string) => Promise<void>) {
+    const supplyKEY = PrivateKey.fromStringDer(
+      process.env.NEXT_PUBLIC_SUPPLY_KEY!
+    );
+
+    const client = Client.forTestnet().setOperator(
+      process.env.NEXT_PUBLIC_SUPPLY_KEY_ID!,
+      supplyKEY
+    );
+    new TopicMessageQuery()
+    .setTopicId(topicId)
+    .subscribe(client, null, async (message) => {
+      let messageAsString = Buffer.from(message.contents).toString('utf8');
+
+      console.log(
+        `${message.consensusTimestamp.toDate()} Received: ${messageAsString}`
+      );
+      await onReceive(messageAsString);
+    });
+  }
+
   async transferFungibleToken(
     toAddress: AccountId,
     tokenId: TokenId,
@@ -247,7 +293,7 @@ class WalletConnectWallet implements WalletInterface {
       .setGas(gasLimit)
       .setFunctionParameters(functionParameters);
     if (value > 0) {
-      tx.setPayableAmount(value)
+      tx.setPayableAmount(value);
     }
     const signer = this.getSigner();
     await tx.freezeWithSigner(signer);

@@ -8,6 +8,8 @@ export interface WalletInterface {
   createNFT: (name: string, symbol: string, supply: number) => Promise<TokenId | null>;
   mintNFTs: (tokenId: TokenId, CIDs: Buffer[]) => Promise<TransactionReceipt>;
   getNFTInfo: (NFTId: NftId) => Promise<TokenNftInfo[]>;
+  createHCSTopic: () => Promise<string | null>;
+  subscribeHCSTopic: (topicId: string, onReceive: (message: string) => Promise<void>) => Promise<void>;
   transferHBAR: (toAddress: AccountId, amount: number) => Promise<TransactionId | string | null>;
   transferFungibleToken: (toAddress: AccountId, tokenId: TokenId, amount: number) => Promise<TransactionId | string | null>;
   transferNonFungibleToken: (toAddress: AccountId, tokenId: TokenId, serialNumber: number) => Promise<TransactionId | string | null>;

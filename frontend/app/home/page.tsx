@@ -36,6 +36,7 @@ interface IHive {
   channelId: string;
   totalParticipants: number;
   participantHBARBalance: number;
+  topicId: string;
 }
 
 const CustomHouseMarker = ({ onClick }: { onClick: () => void }) => {
@@ -251,7 +252,7 @@ const Home = () => {
         hbarDeposit
       );
       const logs = await walletInterface.getEventsFromRecord(tx);
-
+      const topicId = await walletInterface.createHCSTopic();
       await fetch(process.env.NEXT_PUBLIC_SERVER! + "/api/v1/channel/", {
         method: "POST",
         headers: {
@@ -260,6 +261,7 @@ const Home = () => {
         body: JSON.stringify({
           name: channelName,
           channelId: logs[0].args[0].toString(),
+          topicId,
           participants: params.participants,
           closer: params.closer,
           tokens: params.tokens,
@@ -279,6 +281,7 @@ const Home = () => {
           channelId: logs[0].args[0].toString(),
           totalParticipants: params.participants.length,
           participantHBARBalance: hbarDeposit,
+          topicId
         },
       ]);
       setShowHouseDetails(false);
@@ -402,6 +405,9 @@ const Home = () => {
                 </h2>
                 <p className="text-gray-400 mb-4">
                   {hive.totalParticipants} Participants
+                </p>
+                <p className="text-gray-400 mb-4">
+                  HCS Topic - {hive.topicId}
                 </p>
                 <div className="space-y-2 text-sm">
                   <p className="flex items-center justify-between w-full">

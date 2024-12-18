@@ -10,6 +10,7 @@ const createChannel = async (
   const {
     name,
     channelId,
+    topicId,
     participants,
     closer,
     tokens,
@@ -54,6 +55,7 @@ const createChannel = async (
     const newChannel = await Channel.create({
       name,
       channelId,
+      topicId,
       participants,
       closer,
       hbarDeposits,
@@ -222,6 +224,7 @@ const getChannelByParticipant = async (
       return {
         ...channel.toObject(),
         participantHBARBalance,
+        topicId: channel.topicId
       };
     });
 

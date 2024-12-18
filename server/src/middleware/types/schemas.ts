@@ -36,6 +36,7 @@ export const createChannel = yup.object({
   body: yup.object({
     name: yup.string().required(),
     channelId: yup.string().required(),
+    topicId: yup.string().required(),
     participants: yup.array().of(yup.string()).required(),
     closer: yup.string().required(),
     tokens: yup.array().of(yup.string()).optional(),
