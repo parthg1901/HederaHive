@@ -54,14 +54,14 @@ export const updateChannelState = yup.object({
     channelId: yup.string().required(),
     participants: yup.array().of(yup.string()).required(),
     hbarBalances: yup.array().of(yup.number()).required(),
-    tokens: yup.array().of(yup.string()).required(),
-    tokenBalances: yup.array().of(
-      yup.array().of(yup.number()).required()
-    ).required(),
-    nftTokens: yup.array().of(yup.string()).required(),
-    nftFinalBalances: yup.array().of(
-      yup.array().of(yup.number()).required()
-    ).required()
+    // tokens: yup.array().of(yup.string()).required(),
+    // tokenBalances: yup.array().of(
+    //   yup.array().of(yup.number()).required()
+    // ).required(),
+    // nftTokens: yup.array().of(yup.string()).required(),
+    // nftFinalBalances: yup.array().of(
+    //   yup.array().of(yup.number()).required()
+    // ).required()
   })
 });
 

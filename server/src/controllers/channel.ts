@@ -82,10 +82,10 @@ const updateChannelState = async (
     channelId,
     participants,
     hbarBalances,
-    tokens,
-    tokenBalances,
-    nftTokens,
-    nftFinalBalances
+    // tokens,
+    // tokenBalances,
+    // nftTokens,
+    // nftFinalBalances
   } = req.body;
 
   try {
@@ -96,14 +96,14 @@ const updateChannelState = async (
     }
 
     // Validate input lengths
-    if (
-      participants.length !== hbarBalances.length ||
-      tokens.length !== tokenBalances.length ||
-      nftTokens.length !== nftFinalBalances.length
-    ) {
-      res.status(400).json({ message: 'Input lengths are inconsistent' });
-      return;
-    }
+    // if (
+    //   participants.length !== hbarBalances.length ||
+    //   tokens.length !== tokenBalances.length ||
+    //   nftTokens.length !== nftFinalBalances.length
+    // ) {
+    //   res.status(400).json({ message: 'Input lengths are inconsistent' });
+    //   return;
+    // }
 
     // Update HBAR deposits
     const updatedHbarDeposits: Record<string, number> = {};
@@ -112,28 +112,28 @@ const updateChannelState = async (
     });
 
     // Update token deposits
-    const updatedTokenDeposits: Record<string, Record<string, number>> = {};
-    tokens.forEach((tokenAddress: string, tokenIndex: number) => {
-      updatedTokenDeposits[tokenAddress] = {};
-      participants.forEach((participant: string, participantIndex: number) => {
-        updatedTokenDeposits[tokenAddress][participant] =
-          tokenBalances[tokenIndex][participantIndex];
-      });
-    });
+    // const updatedTokenDeposits: Record<string, Record<string, number>> = {};
+    // tokens.forEach((tokenAddress: string, tokenIndex: number) => {
+    //   updatedTokenDeposits[tokenAddress] = {};
+    //   participants.forEach((participant: string, participantIndex: number) => {
+    //     updatedTokenDeposits[tokenAddress][participant] =
+    //       tokenBalances[tokenIndex][participantIndex];
+    //   });
+    // });
 
-    // Update NFT deposits
-    const updatedNftDeposits: Record<string, Record<string, number[]>> = {};
-    nftTokens.forEach((nftAddress: string, nftIndex: number) => {
-      updatedNftDeposits[nftAddress] = {};
-      participants.forEach((participant: string, participantIndex: number) => {
-        updatedNftDeposits[nftAddress][participant] =
-          nftFinalBalances[nftIndex][participantIndex];
-      });
-    });
+    // // Update NFT deposits
+    // const updatedNftDeposits: Record<string, Record<string, number[]>> = {};
+    // nftTokens.forEach((nftAddress: string, nftIndex: number) => {
+    //   updatedNftDeposits[nftAddress] = {};
+    //   participants.forEach((participant: string, participantIndex: number) => {
+    //     updatedNftDeposits[nftAddress][participant] =
+    //       nftFinalBalances[nftIndex][participantIndex];
+    //   });
+    // });
 
     channel.hbarDeposits = updatedHbarDeposits;
-    channel.tokenDeposits = updatedTokenDeposits;
-    channel.nftDeposits = updatedNftDeposits;
+    // channel.tokenDeposits = updatedTokenDeposits;
+    // channel.nftDeposits = updatedNftDeposits;
 
     await channel.save();
 
@@ -226,6 +226,7 @@ const getChannelByParticipant = async (
         participantHBARBalance,
         topicId: channel.topicId,
         participants: channel.participants,
+        hbarDeposits: channel.hbarDeposits,
       };
     });
 

@@ -39,6 +39,7 @@ export interface IHive {
   participantHBARBalance: number;
   participants: string[];
   topicId: string;
+  hbarDeposits: { [key: string]: number }
 }
 
 const CustomHouseMarker = ({ onClick }: { onClick: () => void }) => {
@@ -104,7 +105,8 @@ const Home = () => {
               totalParticipants: hive.totalParticipants,
               participantHBARBalance: hive.participantHBARBalance,
               participants: hive.participants,
-              topicId: hive.topicId
+              topicId: hive.topicId,
+              hbarDeposits: hive.hbarDeposits
             }))
           );
         });
@@ -280,7 +282,10 @@ const Home = () => {
           estateId: selectedEstate?.id,
         }),
       });
-
+      const hbarDeposits = { [accountIdEVM]: hbarDeposit, [closer]: 0 };
+      participants.forEach((participant) => {
+        hbarDeposits[participant] = 0;
+      })
       setHives((prevState) => [
         ...prevState,
         {
@@ -290,6 +295,7 @@ const Home = () => {
           participantHBARBalance: hbarDeposit,
           participants: params.participants,
           topicId,
+          hbarDeposits
         },
       ]);
       setShowHouseDetails(false);

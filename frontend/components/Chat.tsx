@@ -2,7 +2,7 @@
 import { IHive } from "@/app/home/page";
 import { useWalletInterface } from "@/services/wallets/useWalletInterface";
 import { Interface } from "@ethersproject/abi";
-import { ContractId, EntityIdHelper } from "@hashgraph/sdk";
+import { AccountId, ContractId, EntityIdHelper } from "@hashgraph/sdk";
 import React, { useEffect, useState } from "react";
 
 interface ChatroomProps {
@@ -14,7 +14,7 @@ const Chatroom: React.FC<ChatroomProps> = ({ hive, onClose }) => {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState<string>("");
   const [participants, setParticipants] = useState<string[]>(hive.participants);
-  const { walletInterface } = useWalletInterface();
+  const { walletInterface, accountId } = useWalletInterface();
 
   // Modal State
   const [isAddParticipantModalOpen, setAddParticipantModalOpen] =
@@ -69,7 +69,7 @@ const Chatroom: React.FC<ChatroomProps> = ({ hive, onClose }) => {
           },
           body: JSON.stringify({
             channelId: hive.channelId,
-            participants: newParticipant,
+            participant: newParticipant,
           }),
         }
       );
@@ -79,9 +79,27 @@ const Chatroom: React.FC<ChatroomProps> = ({ hive, onClose }) => {
     }
   };
 
-  const handleTransfer = () => {
-    if (transferAmount && selectedParticipant) {
-      alert(`Transfer ${transferAmount} HBAR to ${selectedParticipant}`);
+  const handleTransfer = async () => {
+    if (transferAmount && selectedParticipant && accountId) {
+      const accountIdEVM = AccountId.fromString(accountId).toSolidityAddress();
+      
+      const hbarDeposits = hive.hbarDeposits;
+      hbarDeposits[selectedParticipant] += parseInt(transferAmount);
+      hbarDeposits[accountIdEVM] -= parseInt(transferAmount);
+      await fetch(
+        process.env.NEXT_PUBLIC_SERVER! + "/api/v1/channel/state",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            channelId: hive.channelId,
+            participants,
+            hbarBalances: participants.map((participant) => hbarDeposits[participant]),
+          }),
+        }
+      );
       setTransferAmount("");
       setTransferModalOpen(false);
       setSelectedParticipant(null);
