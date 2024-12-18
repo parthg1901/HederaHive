@@ -224,7 +224,8 @@ const getChannelByParticipant = async (
       return {
         ...channel.toObject(),
         participantHBARBalance,
-        topicId: channel.topicId
+        topicId: channel.topicId,
+        participants: channel.participants,
       };
     });
 

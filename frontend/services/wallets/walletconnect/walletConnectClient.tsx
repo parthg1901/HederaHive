@@ -22,6 +22,8 @@ import {
   TransactionRecord,
   TopicCreateTransaction,
   TopicMessageQuery,
+  TopicMessageSubmitTransaction,
+  Status
 } from "@hashgraph/sdk";
 import { appConfig } from "../../../config";
 import { SignClientTypes } from "@walletconnect/types";
@@ -216,6 +218,7 @@ class WalletConnectWallet implements WalletInterface {
   }
 
   async subscribeHCSTopic(topicId: string, onReceive: (message: string) => Promise<void>) {
+    console.log("Subscribing to topic: " + topicId);
     const supplyKEY = PrivateKey.fromStringDer(
       process.env.NEXT_PUBLIC_SUPPLY_KEY!
     );
@@ -234,6 +237,24 @@ class WalletConnectWallet implements WalletInterface {
       );
       await onReceive(messageAsString);
     });
+  }
+
+  async sendMessage(topicId: string, message: string) {
+
+    let sendResponse = await new TopicMessageSubmitTransaction({
+      topicId: topicId,
+      message,
+    }).executeWithSigner(this.getSigner());
+    const getReceipt = await sendResponse.getReceiptWithSigner(this.getSigner());
+  
+    // Get the status of the transaction
+    const transactionStatus = getReceipt.status;
+    console.log("The message transaction status: " + transactionStatus.toString())
+    if (transactionStatus === Status.Success) {
+      return transactionStatus;
+    } else {
+      throw new Error("Failed to send message");
+    }
   }
 
   async transferFungibleToken(

@@ -18,6 +18,7 @@ import { Interface } from "@ethersproject/abi";
 import Link from "next/link";
 import { PiPlusBold } from "react-icons/pi";
 import CreateHiveModal from "@/components/HiveModal";
+import Chatroom from "@/components/Chat";
 
 interface IEstate {
   id: string;
@@ -31,11 +32,12 @@ interface IEstate {
   channel: string;
 }
 
-interface IHive {
+export interface IHive {
   name: string;
   channelId: string;
   totalParticipants: number;
   participantHBARBalance: number;
+  participants: string[];
   topicId: string;
 }
 
@@ -63,6 +65,7 @@ const Home = () => {
   const markerRef = useRef<mapboxgl.Marker[]>([]);
   const [hives, setHives] = useState<IHive[]>([]);
   const [hiveModal, setHiveModal] = useState(false);
+  const [selectHive, selectedHive] = useState<IHive | null>(null);
 
   useEffect(() => {
     fetch(process.env.NEXT_PUBLIC_SERVER! + "/api/v1/estate/")
@@ -93,18 +96,18 @@ const Home = () => {
       )
         .then((res) => res.json())
         .then((data) => {
-          console.log(data)
+          console.log(data);
           setHives(
             data.channels.map((hive: any) => ({
               name: hive.name,
               channelId: hive.channelId,
               totalParticipants: hive.totalParticipants,
               participantHBARBalance: hive.participantHBARBalance,
+              participants: hive.participants,
+              topicId: hive.topicId
             }))
-          )
-
-        }
-        );
+          );
+        });
     }
   }, [walletInterface]);
   useEffect(() => {
@@ -213,12 +216,16 @@ const Home = () => {
     };
   }, [estates]);
 
-  const createHive = async (channelName: string, participants: string[], hbarDeposit: number) => {
+  const createHive = async (
+    channelName: string,
+    participants: string[],
+    hbarDeposit: number
+  ) => {
     if (walletInterface) {
       const closer = AccountId.fromString(
         process.env.NEXT_PUBLIC_SUPPLY_KEY_ID!
       ).toSolidityAddress();
-      const accountIdEVM =  AccountId.fromString(accountId).toSolidityAddress()
+      const accountIdEVM = AccountId.fromString(accountId).toSolidityAddress();
 
       const params = {
         participants: [...participants, closer, accountIdEVM],
@@ -281,11 +288,16 @@ const Home = () => {
           channelId: logs[0].args[0].toString(),
           totalParticipants: params.participants.length,
           participantHBARBalance: hbarDeposit,
-          topicId
+          participants: params.participants,
+          topicId,
         },
       ]);
       setShowHouseDetails(false);
       setSelectedEstate(null);
+
+      map.current?.dragPan.enable();
+      map.current?.touchZoomRotate.enable();
+      map.current?.scrollZoom.enable();
     }
   };
 
@@ -297,136 +309,155 @@ const Home = () => {
       </div>
 
       {/* Sidebar Section */}
-      <div className="w-[30vw] h-screen border-l border-gray-700 text-gray-200 p-6 shadow-2xl">
-        {/* Sidebar Header */}
-        <div className="mb-6 border-b border-gray-700 pb-4 flex flex-row justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-100 tracking-wide">
-            {showHouseDetails ? "Estate Details" : "Your Hives"}
-          </h1>
-          <div className="flex flex-row gap-4">
-            <button className="rounded-xl bg-purple-600 p-2" onClick={() => setHiveModal(true)}>
-              <PiPlusBold size={20} />
-            </button>
-            <Link
-              href={"/dashboard"}
-              className="bg-purple-600 rounded-xl px-3 py-2"
-            >
-              Your Securities
-            </Link>
-
-          </div>
-        </div>
-
-        {showHouseDetails && selectedEstate ? (
-          <div className="flex flex-col space-y-6">
-            {/* Back Button */}
-            <button
-              className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition mb-6"
-              onClick={() => {
-                setShowHouseDetails(false);
-                map.current?.dragPan.enable();
-                map.current?.touchZoomRotate.enable();
-                map.current?.scrollZoom.enable();
-              }}
-            >
-              <IoChevronBackCircleOutline size={25} />
-              Back
-            </button>
-
-            {/* Estate Details */}
-            <div className="bg-[#2c2c2c] p-6 rounded-lg shadow">
-              <h2 className="text-2xl font-bold text-gray-100 mb-2">
-                {selectedEstate.name}
-              </h2>
-              <p className="text-gray-400 mb-4">{selectedEstate.description}</p>
-              <div className="space-y-2 text-sm">
-                <p className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-gray-300">
-                    Rental Income
-                  </span>
-                  <span>${selectedEstate.rental}</span>
-                </p>
-                <p className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-gray-300">
-                    Estimated Value
-                  </span>
-                  <span>${selectedEstate.estimatedValue}</span>
-                </p>
-                <p className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-gray-300">
-                    NFT Collection Address
-                  </span>
-                  <span>{selectedEstate.token}</span>
-                </p>
-                <p className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-gray-300">Owner</span>
-                  <span>{selectedEstate.owner}</span>
-                </p>
-                <p className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-gray-300">
-                    Area Postal Code
-                  </span>
-                  <span>{selectedEstate.zip}</span>
-                </p>
-              </div>
-            </div>
-            {accountId === selectedEstate.owner ? (
+      {!selectHive && (
+        <div className="w-[30vw] h-screen border-l border-gray-700 text-gray-200 p-6 shadow-2xl">
+          {/* Sidebar Header */}
+          <div className="mb-6 border-b border-gray-700 pb-4 flex flex-row justify-between items-center">
+            <h1 className="text-2xl font-semibold text-gray-100 tracking-wide">
+              {showHouseDetails ? "Estate Details" : "Your Hives"}
+            </h1>
+            <div className="flex flex-row gap-4">
               <button
-                className="bg-purple-600 w-full rounded-xl p-2"
-                onClick={async () => {
-                  const participants: string[] = []
-                  await createHive(selectedEstate.name + "'s Hive", participants, 0)
+                className="rounded-xl bg-purple-600 p-2"
+                onClick={() => setHiveModal(true)}
+              >
+                <PiPlusBold size={20} />
+              </button>
+              <Link
+                href={"/dashboard"}
+                className="bg-purple-600 rounded-xl px-3 py-2"
+              >
+                Your Securities
+              </Link>
+            </div>
+          </div>
+
+          {showHouseDetails && selectedEstate ? (
+            <div className="flex flex-col space-y-6">
+              {/* Back Button */}
+              <button
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-100 transition mb-6"
+                onClick={() => {
+                  setShowHouseDetails(false);
+                  setSelectedEstate(null);
+
+                  map.current?.dragPan.enable();
+                  map.current?.touchZoomRotate.enable();
+                  map.current?.scrollZoom.enable();
                 }}
               >
-                Create Hive
+                <IoChevronBackCircleOutline size={25} />
+                Back
               </button>
-            ) : (
-              <button className="bg-purple-600 w-full rounded-xl p-2">
-                Request to Join Hive
-              </button>
-            )}
-            <button className="border border-purple-600 w-full rounded-xl p-2">
-              Pay Rent
-            </button>
-          </div>
-        ) : hives.length === 0 ? (
-          <div className="flex items-center justify-center text-gray-500">
-            Create a hive to get started.
-          </div>
-        ) : (
-          <div className="flex flex-col space-y-6">
-            {hives.map((hive) => (
-              <div
-                key={hive.channelId}
-                className="bg-[#2c2c2c] p-6 rounded-lg shadow"
-              >
+
+              {/* Estate Details */}
+              <div className="bg-[#2c2c2c] p-6 rounded-lg shadow">
                 <h2 className="text-2xl font-bold text-gray-100 mb-2">
-                  {hive.name}
+                  {selectedEstate.name}
                 </h2>
                 <p className="text-gray-400 mb-4">
-                  {hive.totalParticipants} Participants
-                </p>
-                <p className="text-gray-400 mb-4">
-                  HCS Topic - {hive.topicId}
+                  {selectedEstate.description}
                 </p>
                 <div className="space-y-2 text-sm">
                   <p className="flex items-center justify-between w-full">
                     <span className="font-semibold text-gray-300">
-                      Your Balance
+                      Rental Income
                     </span>
-                    <span>{hive.participantHBARBalance} ℏ</span>
+                    <span>${selectedEstate.rental}</span>
+                  </p>
+                  <p className="flex items-center justify-between w-full">
+                    <span className="font-semibold text-gray-300">
+                      Estimated Value
+                    </span>
+                    <span>${selectedEstate.estimatedValue}</span>
+                  </p>
+                  <p className="flex items-center justify-between w-full">
+                    <span className="font-semibold text-gray-300">
+                      NFT Collection Address
+                    </span>
+                    <span>{selectedEstate.token}</span>
+                  </p>
+                  <p className="flex items-center justify-between w-full">
+                    <span className="font-semibold text-gray-300">Owner</span>
+                    <span>{selectedEstate.owner}</span>
+                  </p>
+                  <p className="flex items-center justify-between w-full">
+                    <span className="font-semibold text-gray-300">
+                      Area Postal Code
+                    </span>
+                    <span>{selectedEstate.zip}</span>
                   </p>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              {accountId === selectedEstate.owner ? (
+                <button
+                  className="bg-purple-600 w-full rounded-xl p-2"
+                  onClick={async () => {
+                    const participants: string[] = [];
+                    await createHive(
+                      selectedEstate.name + "'s Hive",
+                      participants,
+                      0
+                    );
+                  }}
+                >
+                  Create Hive
+                </button>
+              ) : (
+                <button className="bg-purple-600 w-full rounded-xl p-2">
+                  Request to Join Hive
+                </button>
+              )}
+              <button className="border border-purple-600 w-full rounded-xl p-2">
+                Pay Rent
+              </button>
+            </div>
+          ) : hives.length === 0 ? (
+            <div className="flex items-center justify-center text-gray-500">
+              Create a hive to get started.
+            </div>
+          ) : (
+            <div className="flex flex-col space-y-6">
+              {hives.map((hive) => (
+                <div
+                  key={hive.channelId}
+                  className="bg-[#2c2c2c] p-6 rounded-lg shadow cursor-pointer"
+                  onClick={() => selectedHive(hive)}
+                >
+                  <h2 className="text-2xl font-bold text-gray-100 mb-2">
+                    {hive.name}
+                  </h2>
+                  <p className="text-gray-400 mb-4">
+                    {hive.totalParticipants} Participants
+                  </p>
+                  <p className="text-gray-400 mb-4">
+                    HCS Topic - {hive.topicId}
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    <p className="flex items-center justify-between w-full">
+                      <span className="font-semibold text-gray-300">
+                        Your Balance
+                      </span>
+                      <span>{hive.participantHBARBalance} ℏ</span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {hiveModal && (
         <CreateHiveModal
           onClose={() => setHiveModal(false)}
           onSubmit={createHive}
-          />
+        />
+      )}
+      {selectHive && (
+        <Chatroom
+          hive={selectHive}
+          onClose={() => selectedHive(null)}
+        />
       )}
     </div>
   );
