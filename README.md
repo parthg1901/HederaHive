@@ -68,6 +68,9 @@ HederaHive also provides a nice hangout space powered by Hedera Consensus Servic
 
 - HederaSDK - Used for all the interactions from the Frontend.
 
+### Backend:
+- Express + MongoDB + Mongoose
+
 ---
 
 ## Run Locally
