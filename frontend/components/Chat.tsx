@@ -2,7 +2,7 @@
 import { IHive } from "@/app/home/page";
 import { useWalletInterface } from "@/services/wallets/useWalletInterface";
 import { Interface } from "@ethersproject/abi";
-import { AccountId, ContractId, EntityIdHelper } from "@hashgraph/sdk";
+import { ContractId, EntityIdHelper } from "@hashgraph/sdk";
 import React, { useEffect, useState } from "react";
 
 interface ChatroomProps {
@@ -54,7 +54,7 @@ const Chatroom: React.FC<ChatroomProps> = ({ hive, onClose }) => {
       const data = iface
         .encodeFunctionData("openChannel", [hive.channelId, newParticipant])
         .slice(2);
-      const tx = await walletInterface?.executeContractFunction(
+      await walletInterface?.executeContractFunction(
         ContractId.fromString("0.0.5268920"),
         Buffer.from(data, "hex"),
         500000,
