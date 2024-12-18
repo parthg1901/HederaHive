@@ -5,6 +5,8 @@ Try now - [HederaHive](https://www.hederahive.tech/)
 
 Sample Estate - [https://hashscan.io/testnet/token/0.0.5268549/1](https://hashscan.io/testnet/token/0.0.5268549/1)
 
+[Pitch Deck](https://www.canva.com/design/DAGZpt4YH3c/ISQvnXIYh1T8BH4pIzA_og/view?utm_content=DAGZpt4YH3c&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h08ec5ac23d)
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [State Channels(Hives)](#state-channels)
@@ -28,6 +30,16 @@ HederaHive also provides a nice hangout space powered by Hedera Consensus Servic
 
 ## State Channels (Hives)
 
+Let's consider a scenario where a large organization of 100 members makes 10,000 crypto transfers per month among its members. 
+
+Hedera Network Fees - $0.0001 * 10000 = $1
+
+With State Channels - $0.0001 * No. of members = $0.01
+
+Cost Reduction = 100x
+
+Apart from the cost reduction, it also reduces the load on Hedera Nodes. Hence, improving the overall throughput of the chain.
+
 ![home](https://rose-melodic-felidae-510.mypinata.cloud/ipfs/QmQbYVZj6RbyAGYzQRSxsvYLkdqEWJfqUPLp5N6VoUUomK)
 
 - There are two types of Hives - Real Estate based Hive and Custom Hive.
@@ -41,6 +53,10 @@ HederaHive also provides a nice hangout space powered by Hedera Consensus Servic
 ---
 
 ## Estate Tokenization
+
+ - Fractional Ownership - allows holders to get ownership of the property along with a share in any kind of rental income. This is suitable for long-term investors. 
+
+ - Rent Sharing - Rent sharing is a type of fractional ownership that allows investors to share in the rental income from a property without actually owning it. This is a good option for investors who are not interested in owning the property long-term and just want to get a share of the rental income. The actual owner of the property gets instant money from this. So, it serves as the rent paid in advance
 
 ![security](https://rose-melodic-felidae-510.mypinata.cloud/ipfs/QmNdvxjRupSDPVqtegkcgXh6By7SfQWDL7Py3hMtCNU91u)
 
