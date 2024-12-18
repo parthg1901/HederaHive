@@ -7,8 +7,8 @@ interface IChannel {
   participants: string[];
   closer: string;
   hbarDeposits: { [key: string]: number };
-  tokenDeposits: { [tokenAddress: string]: { [participantAddress: string]: number } };
-  nftDeposits: { [tokenAddress: string]: { [participantAddress: string]: number[] } };
+  tokenDeposits: { [key: string]: { [key: string]: number } };
+  nftDeposits: { [key: string]: { [key: string]: number[] } };
   totalParticipants: number;
   lastFinalized: number;
   channelId: string;
@@ -36,22 +36,22 @@ const channelSchema = new Schema<IChannel>({
     required: true
   },
   hbarDeposits: {
-    type: Map,
+    type: Object,
     of: Number,
     default: {}
   },
   tokenDeposits: {
-    type: Map,
+    type: Object,
     of: {
-      type: Map,
+      type: Object,
       of: Number
     },
     default: {}
   },
   nftDeposits: {
-    type: Map,
+    type: Object,
     of: {
-      type: Map,
+      type: Object,
       of: [Number]
     },
     default: {}
