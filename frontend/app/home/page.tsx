@@ -16,6 +16,8 @@ import { useWalletInterface } from "@/services/wallets/useWalletInterface";
 import { AccountId, ContractId } from "@hashgraph/sdk";
 import { Interface } from "@ethersproject/abi";
 import Link from "next/link";
+import { PiPlusBold } from "react-icons/pi";
+import CreateHiveModal from "@/components/HiveModal";
 
 interface IEstate {
   id: string;
@@ -59,6 +61,7 @@ const Home = () => {
   const map = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker[]>([]);
   const [hives, setHives] = useState<IHive[]>([]);
+  const [hiveModal, setHiveModal] = useState(false);
 
   useEffect(() => {
     fetch(process.env.NEXT_PUBLIC_SERVER! + "/api/v1/estate/")
@@ -209,17 +212,15 @@ const Home = () => {
     };
   }, [estates]);
 
-  const createHive = async () => {
+  const createHive = async (channelName: string, participants: string[], hbarDeposit: number) => {
     if (walletInterface) {
       const closer = AccountId.fromString(
         process.env.NEXT_PUBLIC_SUPPLY_KEY_ID!
       ).toSolidityAddress();
+      const accountIdEVM =  AccountId.fromString(accountId).toSolidityAddress()
 
       const params = {
-        participants: [
-          AccountId.fromString(accountId).toSolidityAddress(),
-          closer,
-        ],
+        participants: [...participants, closer, accountIdEVM],
         closer: closer,
         tokens: [],
         tokenAmounts: [],
@@ -247,7 +248,7 @@ const Home = () => {
         ContractId.fromString("0.0.5268920"),
         Buffer.from(data, "hex"),
         500000,
-        0
+        hbarDeposit
       );
       const logs = await walletInterface.getEventsFromRecord(tx);
 
@@ -257,7 +258,7 @@ const Home = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: selectedEstate?.name + "'s Hive",
+          name: channelName,
           channelId: logs[0].args[0].toString(),
           participants: params.participants,
           closer: params.closer,
@@ -265,8 +266,8 @@ const Home = () => {
           tokenAmounts: params.tokenAmounts,
           nftTokens: params.nftTokens,
           serialNumbers: params.serialNumbers,
-          hbarDeposit: 0,
-          creator: AccountId.fromString(accountId).toSolidityAddress(),
+          hbarDeposit: hbarDeposit,
+          creator: accountIdEVM,
           estateId: selectedEstate?.id,
         }),
       });
@@ -274,12 +275,14 @@ const Home = () => {
       setHives((prevState) => [
         ...prevState,
         {
-          name: selectedEstate?.name + "'s Hive",
+          name: channelName,
           channelId: logs[0].args[0].toString(),
-          totalParticipants: 2,
-          participantHBARBalance: 0,
+          totalParticipants: params.participants.length,
+          participantHBARBalance: hbarDeposit,
         },
       ]);
+      setShowHouseDetails(false);
+      setSelectedEstate(null);
     }
   };
 
@@ -297,12 +300,18 @@ const Home = () => {
           <h1 className="text-2xl font-semibold text-gray-100 tracking-wide">
             {showHouseDetails ? "Estate Details" : "Your Hives"}
           </h1>
-          <Link
-            href={"/dashboard"}
-            className="bg-purple-600 rounded-xl px-3 py-2"
-          >
-            Your Securities
-          </Link>
+          <div className="flex flex-row gap-4">
+            <button className="rounded-xl bg-purple-600 p-2" onClick={() => setHiveModal(true)}>
+              <PiPlusBold size={20} />
+            </button>
+            <Link
+              href={"/dashboard"}
+              className="bg-purple-600 rounded-xl px-3 py-2"
+            >
+              Your Securities
+            </Link>
+
+          </div>
         </div>
 
         {showHouseDetails && selectedEstate ? (
@@ -361,7 +370,10 @@ const Home = () => {
             {accountId === selectedEstate.owner ? (
               <button
                 className="bg-purple-600 w-full rounded-xl p-2"
-                onClick={createHive}
+                onClick={async () => {
+                  const participants: string[] = []
+                  await createHive(selectedEstate.name + "'s Hive", participants, 0)
+                }}
               >
                 Create Hive
               </button>
@@ -394,7 +406,7 @@ const Home = () => {
                 <div className="space-y-2 text-sm">
                   <p className="flex items-center justify-between w-full">
                     <span className="font-semibold text-gray-300">
-                      Balance
+                      Your Balance
                     </span>
                     <span>{hive.participantHBARBalance} ℏ</span>
                   </p>
@@ -404,6 +416,12 @@ const Home = () => {
           </div>
         )}
       </div>
+      {hiveModal && (
+        <CreateHiveModal
+          onClose={() => setHiveModal(false)}
+          onSubmit={createHive}
+          />
+      )}
     </div>
   );
 };
