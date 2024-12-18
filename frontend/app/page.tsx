@@ -45,8 +45,8 @@ export default function Home() {
 
     gsap.fromTo(
       "#text",
-      { text: "Payments that scale." },
-      { text: "Payments that connect.", delay: 1, repeat: -1, duration: 3 }
+      { text: "Payments" },
+      { text: " Estates", delay: 1, repeat: -1, duration: 3 }
     );
   });
 
@@ -87,12 +87,20 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex flex-col items-center justify-center text-center h-screen gap-4">
-        <h3
-          id="text"
-          className="lg:text-[100px] text-[60px] font-[family-name:var(--font-geist-mono)]"
-        >
-          Payments that scale.
-        </h3>
+        <div className="flex flex-row gap-10">
+          <h3
+            id="text"
+            className="lg:text-[100px] text-[60px] font-[family-name:var(--font-geist-mono)]"
+          >
+            Payments
+          </h3>
+          <h3
+            className="lg:text-[100px] text-[60px] font-[family-name:var(--font-geist-mono)]"
+          >
+            that scale.
+          </h3>
+
+        </div>
         <Link href={"/home"}
           className="gd-button relative inline-block text-white p-[0.5px] font-medium rounded-xl
           bg-gradient-to-r from-yellow-500 via-purple-300 to-blue-300
